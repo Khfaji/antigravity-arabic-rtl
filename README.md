@@ -79,22 +79,26 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 
 ## 🛠️ البنية التقنية وميكانيكية العمل
 
-```
+<div align="center">
+
+```text
 +-------------------------------------------------------------+
-|                Google Antigravity Runtime                   |
+|                 Google Antigravity Runtime                  |
 +------------------------------+------------------------------+
                                |
-            [Chrome DevTools Protocol (CDP) / Preload]
+           [Chrome DevTools Protocol (CDP) / Preload]
                                |
                                v
 +-------------------------------------------------------------+
-|               Antigravity Arabic RTL Engine                 |
+|                Antigravity Arabic RTL Engine                |
 |  - BiDi Plaintext Rule Engine (Strict Paragraph Isolation)  |
 |  - Predominant Language Detection (Arabic vs Latin Count)   |
 |  - Queued Messages Mirrored Controls & Arrow Inversion      |
 |  - MutationObserver + Periodic Micro-Task Sync              |
 +-------------------------------------------------------------+
 ```
+
+</div>
 
 1. **الربط الداخلي الآمن:** يتم الاتصال بنافذة العرض عبر بروتوكول DevTools أو عبر حقن معزول تماماً لا يمس شفرة المصدر الأساسية.
 2. **عزل الأكواد البرمجية:** استثناء صريح لعناصر `pre, code, .monaco-editor, [class*="shiki"]` لضمان عدم تأثر أي كود أو محرر برمجي بالـ RTL.
