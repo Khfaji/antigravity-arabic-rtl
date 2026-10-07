@@ -11,8 +11,8 @@
 </p>
 
 <p align="center">
-  <img src="assets/iraq-flag-waving.gif" width="120" alt="العلم العراقي يرفرف" /><br/>
-  <b>صُنِعَ بِكُلِّ فَخْرٍ فِي العِرَاقِ 🇮🇶</b>
+  <img src="assets/iraq-flag-waving.gif" width="130" alt="العلم العراقي يرفرف" /><br/>
+  <b>صُنِعَ بِكُلِّ فَخْرٍ فِي العِرَاقِ</b>
 </p>
 
 </div>
@@ -125,8 +125,8 @@ install.bat
 
 <div align="center">
 
-<img src="assets/iraq-flag-waving.gif" width="100" alt="العلم العراقي يرفرف" /><br/>
-<b>صُنِعَ بِكُلِّ فَخْرٍ فِي العِرَاقِ 🇮🇶</b>
+<img src="assets/iraq-flag-waving.gif" width="110" alt="العلم العراقي يرفرف" /><br/>
+<b>صُنِعَ بِكُلِّ فَخْرٍ فِي العِرَاقِ</b>
 
 </div>
 
