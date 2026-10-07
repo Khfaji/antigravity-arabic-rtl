@@ -107,7 +107,9 @@ if ($ideCmd) {
 Write-Host "[6/6] تسجيل التشغيل التلقائي مع الويندوز واقتران التطبيق..." -ForegroundColor Yellow
 $vbsPath = Join-Path $targetDir "start_hidden.vbs"
 $launcherVbs = Join-Path $targetDir "antigravity_launcher.vbs"
+$ideLauncherVbs = Join-Path $targetDir "antigravity_ide_launcher.vbs"
 Copy-Item (Join-Path $scriptDir "src\antigravity_launcher.vbs") -Destination $launcherVbs -Force
+Copy-Item (Join-Path $scriptDir "src\antigravity_ide_launcher.vbs") -Destination $ideLauncherVbs -Force
 
 # Register in HKCU Run
 $regValue = "wscript.exe `"$vbsPath`""
@@ -119,10 +121,11 @@ if (Test-Path $startupDir) {
     Copy-Item $vbsPath -Destination (Join-Path $startupDir "AntigravityRTL.vbs") -Force
 }
 
-# Attach to Antigravity Shortcuts (Start Menu & Desktop)
+# Attach to Antigravity & Antigravity IDE Shortcuts (Start Menu & Desktop)
+$wsh = New-Object -ComObject WScript.Shell
+
 $antigravityExe = "$env:LOCALAPPDATA\Programs\antigravity\Antigravity.exe"
 if (Test-Path $antigravityExe) {
-    $wsh = New-Object -ComObject WScript.Shell
     $shortcutPaths = @(
         "$appDataDir\Microsoft\Windows\Start Menu\Programs\Antigravity.lnk",
         "$userProfile\Desktop\Antigravity.lnk",
@@ -135,6 +138,26 @@ if (Test-Path $antigravityExe) {
                 $lnk.TargetPath = "wscript.exe"
                 $lnk.Arguments = "`"$launcherVbs`""
                 $lnk.IconLocation = "$antigravityExe,0"
+                $lnk.Save()
+            } catch {}
+        }
+    }
+}
+
+$ideExe = "$env:LOCALAPPDATA\Programs\Antigravity IDE\Antigravity IDE.exe"
+if (Test-Path $ideExe) {
+    $ideShortcuts = @(
+        "$appDataDir\Microsoft\Windows\Start Menu\Programs\Antigravity IDE\Antigravity IDE.lnk",
+        "$userProfile\Desktop\Antigravity IDE.lnk",
+        "$userProfile\OneDrive\Desktop\Antigravity IDE.lnk"
+    )
+    foreach ($sc in $ideShortcuts) {
+        if (Test-Path $sc) {
+            try {
+                $lnk = $wsh.CreateShortcut($sc)
+                $lnk.TargetPath = "wscript.exe"
+                $lnk.Arguments = "`"$ideLauncherVbs`""
+                $lnk.IconLocation = "$ideExe,0"
                 $lnk.Save()
             } catch {}
         }
