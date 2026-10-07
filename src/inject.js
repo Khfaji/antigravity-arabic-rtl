@@ -8,21 +8,19 @@ const INJECT_CODE = `
     document.head.appendChild(style);
   }
   style.textContent = [
-    '/* Lexical Chat Input paragraphs: support independent auto direction per line */',
+    '/* Lexical Chat Input: do NOT force direction on editor root */',
+    'div[data-lexical-editor="true"], div[contenteditable="true"] {',
+    '  text-align: start !important;',
+    '  direction: ltr !important;',
+    '}',
+
+    '/* Lexical Paragraphs: each line/paragraph uses plaintext bidi + start alignment */',
+    '/* In plaintext BiDi mode, each line separated by newline/br aligns dynamically */',
     'div[data-lexical-editor="true"] p,',
     'div[contenteditable="true"] p {',
+    '  unicode-bidi: plaintext !important;',
     '  text-align: start !important;',
-    '  unicode-bidi: normal !important;',
-    '}',
-    'div[data-lexical-editor="true"] p[dir="rtl"],',
-    'div[contenteditable="true"] p[dir="rtl"] {',
-    '  direction: rtl !important;',
-    '  text-align: right !important;',
-    '}',
-    'div[data-lexical-editor="true"] p[dir="ltr"],',
-    'div[contenteditable="true"] p[dir="ltr"] {',
     '  direction: ltr !important;',
-    '  text-align: left !important;',
     '}',
 
     '/* Code blocks and Monaco editor must ALWAYS stay LTR */',
@@ -42,24 +40,59 @@ const INJECT_CODE = `
     '  text-align: left !important;',
     '}',
 
-    '/* Mixed-language multi-line text (User sent message, queued message, chat steps) */',
+    '/* User sent messages and chat steps: true independent line-by-line BiDi */',
     '.whitespace-pre-wrap {',
-    '  unicode-bidi: plaintext !important;',
+    '  direction: ltr !important;',
     '  text-align: start !important;',
+    '  unicode-bidi: plaintext !important;',
     '}',
 
-    '/* User card container alignment to right when message contains Arabic */',
-    '.user-card-rtl {',
-    '  margin-left: auto !important;',
-    '  margin-right: 0 !important;',
-    '  align-self: flex-end !important;',
+    '/* Queued message RTL row styling */',
+    '.antigravity-queued-row-rtl {',
+    '  direction: rtl !important;',
+    '}',
+    '.antigravity-queued-row-rtl .line-clamp-2 {',
+    '  direction: rtl !important;',
+    '  text-align: right !important;',
+    '  width: 100% !important;',
+    '}',
+    '.antigravity-queued-row-rtl .flex-1 {',
+    '  direction: rtl !important;',
+    '}',
+
+    '/* Decorators for RTL queued row */',
+    '.antigravity-queued-row-rtl [data-testid="queued-decorators"] {',
+    '  direction: rtl !important;',
+    '  flex-direction: row-reverse !important;',
+    '}',
+
+    '/* Flip the send arrow icon horizontally in RTL */',
+    '.antigravity-queued-row-rtl [data-testid="queued-decorators"] button[aria-label*="Send now"] svg {',
+    '  transform: scaleX(-1) !important;',
+    '}',
+
+    '/* Decorators for LTR (English) queued row: Delete - Edit - Send */',
+    '.antigravity-queued-row-ltr {',
+    '  direction: ltr !important;',
+    '}',
+    '.antigravity-queued-row-ltr [data-testid="queued-decorators"] {',
+    '  direction: ltr !important;',
+    '  flex-direction: row-reverse !important;',
     '}'
   ].join('\\n');
 
-  // 2. Smart BiDi Input Handler: manages EACH PARAGRAPH INDEPENDENTLY!
-  function updateEditorParagraphs(editor) {
+  // Helper: check if text predominantly has Arabic vs Latin
+  function getPredominantDir(text) {
+    if (!text) return 'auto';
+    const arabicCount = (text.match(/[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]/g) || []).length;
+    const latinCount = (text.match(/[A-Za-z]/g) || []).length;
+    if (arabicCount === 0 && latinCount === 0) return 'auto';
+    return arabicCount >= latinCount ? 'rtl' : 'ltr';
+  }
+
+  // 2. Input Handler: clean any forced direction from editor and paragraphs
+  function cleanEditorStyles(editor) {
     if (!editor) return;
-    // Don't force dir on the editor root - allow each child <p> to have its own direction!
     editor.removeAttribute('dir');
     editor.style.direction = '';
     editor.style.textAlign = '';
@@ -67,15 +100,9 @@ const INJECT_CODE = `
     const paragraphs = editor.querySelectorAll('p');
     for (let i = 0; i < paragraphs.length; i++) {
       const p = paragraphs[i];
-      const text = p.innerText || p.textContent || '';
-      if (/[\\u0600-\\u06FF]/.test(text)) {
-        p.setAttribute('dir', 'rtl');
-      } else if (text.trim().length > 0) {
-        p.setAttribute('dir', 'ltr');
-      } else {
-        // Empty paragraph: default to auto so it flows with the next typed character
-        p.setAttribute('dir', 'auto');
-      }
+      p.removeAttribute('dir');
+      p.style.direction = '';
+      p.style.textAlign = '';
     }
   }
 
@@ -84,15 +111,15 @@ const INJECT_CODE = `
     if (!target) return;
     const editor = target.closest ? target.closest('[data-lexical-editor="true"], div[contenteditable="true"]') : null;
     if (editor) {
-      updateEditorParagraphs(editor);
+      cleanEditorStyles(editor);
     } else if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
       const text = target.value || '';
-      if (/[\\u0600-\\u06FF]/.test(text)) {
-        target.setAttribute('dir', 'rtl');
+      const dir = getPredominantDir(text);
+      target.setAttribute('dir', dir);
+      if (dir === 'rtl') {
         target.style.setProperty('direction', 'rtl', 'important');
         target.style.setProperty('text-align', 'right', 'important');
-      } else if (text.trim().length > 0) {
-        target.setAttribute('dir', 'ltr');
+      } else if (dir === 'ltr') {
         target.style.setProperty('direction', 'ltr', 'important');
         target.style.setProperty('text-align', 'left', 'important');
       } else {
@@ -102,88 +129,114 @@ const INJECT_CODE = `
       }
     }
   };
+
   document.removeEventListener('input', window.__smart_bidi_input_handler, true);
   document.removeEventListener('keyup', window.__smart_bidi_input_handler, true);
   document.addEventListener('input', window.__smart_bidi_input_handler, true);
   document.addEventListener('keyup', window.__smart_bidi_input_handler, true);
 
-  // 3. Scan & align all blocks, user messages, and queued bubbles
-  function fixAllArabic(root) {
-    try {
-      const targetRoot = (root && root.body) ? root.body : ((root && root.nodeType === 1) ? root : document.body);
-      if (!targetRoot) return;
+  // Clean old keydown listener if present
+  if (window.__antigravity_smart_list_handler) {
+    document.removeEventListener('keydown', window.__antigravity_smart_list_handler, true);
+    window.__antigravity_smart_list_handler = null;
+  }
 
-      // Ensure active input editor paragraphs are clean
-      const editors = targetRoot.querySelectorAll ? targetRoot.querySelectorAll('[data-lexical-editor="true"]') : [];
+  // 3. Scan & align all blocks, user messages, and queued bubbles
+  function fixAllArabic() {
+    try {
+      // Ensure active input editor paragraphs are clean from any forced dir
+      const editors = document.querySelectorAll('[data-lexical-editor="true"]');
       for (let i = 0; i < editors.length; i++) {
-        updateEditorParagraphs(editors[i]);
+        cleanEditorStyles(editors[i]);
       }
 
       // Format individual block elements (paragraphs, list items, headings)
-      const blockElements = targetRoot.querySelectorAll 
-        ? targetRoot.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, blockquote, td, th')
-        : [];
-      
+      const blockElements = document.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, blockquote, td, th');
       for (let i = 0; i < blockElements.length; i++) {
         const el = blockElements[i];
         if (el.closest('pre, code, .code-block, .monaco-editor, [data-lexical-editor="true"]')) continue;
         const text = el.innerText || el.textContent || '';
-        if (/[\\u0600-\\u06FF]/.test(text)) {
-          el.setAttribute('dir', 'rtl');
-        } else if (/[A-Za-z]/.test(text)) {
-          el.setAttribute('dir', 'ltr');
+        const dir = getPredominantDir(text);
+        if (dir === 'rtl' || dir === 'ltr') {
+          el.setAttribute('dir', dir);
         }
       }
 
       // Multi-line pre-wrap messages (user messages, chat steps)
-      const preWraps = targetRoot.querySelectorAll ? targetRoot.querySelectorAll('.whitespace-pre-wrap') : [];
+      const preWraps = document.querySelectorAll('.whitespace-pre-wrap');
       for (let i = 0; i < preWraps.length; i++) {
         const el = preWraps[i];
         if (el.closest('pre, code, .code-block, .monaco-editor, [data-lexical-editor="true"]')) continue;
-        
-        // Use unicode-bidi: plaintext on pre-wrap containers
-        el.style.setProperty('unicode-bidi', 'plaintext', 'important');
+        el.style.setProperty('direction', 'ltr', 'important');
         el.style.setProperty('text-align', 'start', 'important');
+        el.style.setProperty('unicode-bidi', 'plaintext', 'important');
         el.removeAttribute('dir');
-        el.style.direction = '';
-
-        const text = el.innerText || el.textContent || '';
-        if (/[\\u0600-\\u06FF]/.test(text)) {
-          const userStep = el.closest('[data-testid="user-input-step"], .group\\\\/user-input-step');
-          if (userStep) {
-            const cardBorder = userStep.querySelector('[class*="bg-card-border"]');
-            if (cardBorder) cardBorder.classList.add('user-card-rtl');
-          }
-        }
       }
 
-      // Queued message bubbles
-      const queuedElements = targetRoot.querySelectorAll 
-        ? targetRoot.querySelectorAll('.flex.flex-col.gap-2.w-full.mb-2 > div, [class*="queued"]')
-        : [];
-      for (let i = 0; i < queuedElements.length; i++) {
-        const q = queuedElements[i];
-        q.style.setProperty('unicode-bidi', 'plaintext', 'important');
-        q.style.setProperty('text-align', 'start', 'important');
+      // Queued message items inside [data-testid="queued-messages-card"]
+      const queuedCards = document.querySelectorAll('[data-testid="queued-messages-card"]');
+      for (let i = 0; i < queuedCards.length; i++) {
+        const card = queuedCards[i];
+        const rows = card.querySelectorAll('.line-clamp-2');
+        for (let j = 0; j < rows.length; j++) {
+          const rowSpan = rows[j];
+          const text = rowSpan.textContent || '';
+          const dir = getPredominantDir(text);
+          const flexTextContainer = rowSpan.parentElement;
+          const fullRow = flexTextContainer ? flexTextContainer.parentElement : null;
+
+          if (dir === 'rtl') {
+            if (fullRow) {
+              fullRow.classList.add('antigravity-queued-row-rtl');
+              fullRow.classList.remove('antigravity-queued-row-ltr');
+              fullRow.style.setProperty('direction', 'rtl', 'important');
+            }
+            if (flexTextContainer) {
+              flexTextContainer.style.setProperty('direction', 'rtl', 'important');
+            }
+            rowSpan.style.setProperty('direction', 'rtl', 'important');
+            rowSpan.style.setProperty('text-align', 'right', 'important');
+            rowSpan.style.width = '100%';
+          } else if (dir === 'ltr') {
+            if (fullRow) {
+              fullRow.classList.remove('antigravity-queued-row-rtl');
+              fullRow.classList.add('antigravity-queued-row-ltr');
+              fullRow.style.setProperty('direction', 'ltr', 'important');
+            }
+            if (flexTextContainer) {
+              flexTextContainer.style.setProperty('direction', 'ltr', 'important');
+            }
+            rowSpan.style.setProperty('direction', 'ltr', 'important');
+            rowSpan.style.setProperty('text-align', 'left', 'important');
+            rowSpan.style.width = '';
+          }
+        }
       }
     } catch (e) {}
   }
 
-  fixAllArabic(document);
+  // Initial fix
+  fixAllArabic();
 
   // 4. Persistent Mutation Observer
   if (window.__antigravity_rtl_observer) {
     window.__antigravity_rtl_observer.disconnect();
   }
-  window.__antigravity_rtl_observer = new MutationObserver(function(mutations) {
-    for (let i = 0; i < mutations.length; i++) {
-      const added = mutations[i].addedNodes;
-      for (let j = 0; j < added.length; j++) {
-        if (added[j].nodeType === 1) fixAllArabic(added[j]);
-      }
-    }
+  window.__antigravity_rtl_observer = new MutationObserver(function() {
+    fixAllArabic();
   });
-  window.__antigravity_rtl_observer.observe(document.body, { childList: true, subtree: true });
+  window.__antigravity_rtl_observer.observe(document.body, { 
+    childList: true, 
+    subtree: true, 
+    characterData: true 
+  });
+
+  // 5. Fast Periodic Backup Timer (guarantees continuous application)
+  if (window.__antigravity_rtl_interval) {
+    clearInterval(window.__antigravity_rtl_interval);
+  }
+  window.__antigravity_rtl_interval = setInterval(fixAllArabic, 300);
+
   return 'SUCCESS';
 })();
 `;
