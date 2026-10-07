@@ -52,8 +52,8 @@
 * 🌲 **محرك المراقبة الشاملة والمستمرة (Hybrid Observer + Sync Engine):** يراقب كل تغيرات الـ DOM ويدمج تزامناً دورياً خفيفاً للغاية (< 15MB ذاكرة) لضمان تطبيق القواعد على أي رسالة جديدة فور إضافتها.
 * 💻 **دعم متكامل وشامل (Standalone Desktop App & Antigravity IDE):** تثبيت وتفعيل إضافة الـ RTL الرسمية داخل محرر IDE برمجياً وبصمت تام.
 * 🤖 **قواعد التوجيه المعرفي للذكاء الاصطناعي (`AGENTS.md` / `GEMINI.md`):** حقن تعليمات إلزامية تجبر الوكيل والمودل على صياغة الردود العربية بتغليف RTL صحيح مع عزل الأكواد بمسارات LTR واضحة.
-* 🔄 **إعادة حقن وحماية تلقائية بعد التحديثات (Self-Healing Auto-Patch on Update):** ترصد الخدمة في الخلفية استبدال حزمة `app.asar` تلقائياً عند قيام Google بطرح تحديث جديد لـ Antigravity، وتقوم فورياً ودون أي تدخل يدوي بإعادة تطبيق وحقن محرك اللغة العربية والـ RTL داخل الحزمة الجديدة مع الحفاظ على الربط الحي عبر (CDP).
-* 🛡️ **حقن دائم أصلي في شريان التطبيق وبدء التشغيل:** مدمج مباشرة في ملف إقلاع التطبيق ويعمل تلقائياً عند فتح البرنامج ومع بدء تشغيل الويندوز (Windows Startup) باستهلاك موارد متناهي الصغر (< 15MB ذاكرة).
+* 🔄 **إعادة حقن واستجابة فورية بعد التحديثات (Update-Resilient CDP Engine):** ترصد الخدمة في الخلفية تشغيل نوافذ Antigravity فورياً وتقترن بها عبر بروتوكول التشخيص (CDP)، مما يضمن استمرار وتطبيق دعم العربية تلقائياً حتى عند قيام Google بطرح تحديثات واستبدال ملفات التطبيق.
+* 🛡️ **تشغيل هادئ ومستقل مع بدء النظام:** تعمل الخدمة بخفة تامة مع إقلاع الويندوز (Windows Startup) وبدون تعديل ملفات معقد أو تأثير على أداء النظام (< 15MB ذاكرة).
 
 ---
 
@@ -134,7 +134,7 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 * **True Line-by-Line BiDi:** Allows mixed-language paragraphs in Lexical chat input without cross-line text corruption.
 * **Predominant Language Counting:** Calculates character frequency to determine line direction, keeping code and tech terms strictly LTR.
 * **Smart Queued Messages Handling:** Automatically aligns queued cards with mirrored action buttons and flipped send arrows for RTL messages.
-* **Self-Healing Auto-Patch on Updates:** Background watcher monitors Antigravity core packages and automatically re-patches `app.asar` when Google pushes an update, guaranteeing zero loss of Arabic & RTL capabilities.
+* **Update-Resilient Architecture:** Runs independently via Chrome DevTools Protocol & Windows Startup, automatically attaching to Antigravity runtime even after Google updates the application packages.
 * **Zero Disruption to Code:** Monaco editor, Markdown code blocks, and syntax containers remain completely LTR.
 * **Seamless Installation:** One-click automated setup with zero manual configuration.
 
