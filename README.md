@@ -45,7 +45,7 @@
 ### الطريقة الأولى: التحميل والتشغيل المباشر (الموصى بها)
 1. قم بتحميل المشروع كملف ZIP أو استنسخه عبر Git:
    ```bash
-   git clone https://github.com/<your-username>/antigravity-arabic-rtl.git
+   git clone https://github.com/Khfaji/antigravity-arabic-rtl.git
    ```
 2. اضغط مرتين (Double Click) على الملف:
    👉 **`install.bat`**
@@ -53,15 +53,11 @@
 
 ---
 
-### الطريقة الثانية: عبر سطر أوامر PowerShell (أمر واحد فقط)
-افتح **PowerShell** والصق هذا الأمر:
+### الطريقة الثانية: عبر سطر أوامر PowerShell (أمر واحد فقط وبدون تحميل)
+افتح **PowerShell** والصق هذا الأمر مباشرة:
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/<your-username>/antigravity-arabic-rtl/main/install.ps1' -OutFile '$env:TEMP\install.ps1'; & '$env:TEMP\install.ps1'"
+powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Khfaji/antigravity-arabic-rtl/main/install.ps1' -OutFile '$env:TEMP\install.ps1'; & '$env:TEMP\install.ps1'"
 ```
-
-> ⚠️ **ملاحظة هامة بخصوص اسم المستخدم (`<your-username>`):**
-> * في حال استخدامك للأوامر أعلاه مباشرة عبر الإنترنت (التفعيل اليدوي عبر الرابط أو عند عمل Fork للمشروع)، **يجب استبدال `<your-username>` باسم حسابك على GitHub** (أو كتابة **`Khfaji`** لتحميل النسخة الرسمية مباشرة).
-> * **أما داخل جهازك (Windows):** لا داعي للقلق إطلاقاً! فمسارات الويندوز واسم المستخدم على جهازك يتم التعرف عليها وحلها **تلقائياً بنسبة 100%** عبر سكريبت التثبيت دون أي تدخل منك.
 
 ---
 
