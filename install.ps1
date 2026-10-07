@@ -16,15 +16,42 @@ Write-Host "   تفعيل دعم اللغة العربية واتجاه اليم
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 1. Check Node.js
-Write-Host "[1/5] التحقق من وجود Node.js..." -ForegroundColor Yellow
+# 1. Check & Auto-Install Node.js
+Write-Host "[1/5] التحقق من بيئة Node.js..." -ForegroundColor Yellow
 $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+
 if (-not $nodeCmd) {
-    Write-Host "❌ خطأ: Node.js غير مثبت على جهازك!" -ForegroundColor Red
-    Write-Host "يرجى تثبيت Node.js أولاً عبر تشغيل:" -ForegroundColor Yellow
-    Write-Host "winget install OpenJS.NodeJS.LTS" -ForegroundColor White
+    # Check default paths in case PATH hasn't refreshed
+    $defaultPaths = @("C:\Program Files\nodejs", "C:\Program Files (x86)\nodejs")
+    foreach ($p in $defaultPaths) {
+        if (Test-Path (Join-Path $p "node.exe")) {
+            $env:Path = "$p;" + $env:Path
+            $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+            break
+        }
+    }
+}
+
+if (-not $nodeCmd) {
+    Write-Host "⚠️ لم يتم العثور على Node.js. جاري تثبيته تلقائياً عبر winget..." -ForegroundColor Yellow
+    $wingetCmd = Get-Command winget -ErrorAction SilentlyContinue
+    if ($wingetCmd) {
+        try {
+            winget install --id OpenJS.NodeJS.LTS -e --silent --accept-source-agreements --accept-package-agreements
+            $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+            $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+        } catch {
+            Write-Host "تعذر التثبيت التلقائي لـ winget." -ForegroundColor DarkYellow
+        }
+    }
+}
+
+if (-not $nodeCmd) {
+    Write-Host "❌ خطأ: Node.js مطلوب لتشغيل الخدمة." -ForegroundColor Red
+    Write-Host "يرجى تثبيت Node.js من: https://nodejs.org ثم إعادة تشغيل التثبيت." -ForegroundColor Yellow
     exit 1
 }
+
 $nodeVersion = node -v
 Write-Host "✅ تم العثور على Node.js ($nodeVersion)" -ForegroundColor Green
 

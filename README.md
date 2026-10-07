@@ -20,6 +20,15 @@
 
 ---
 
+## 📋 المتطلبات (Prerequisites)
+
+* **نظام التشغيل:** نظام Windows 10 أو Windows 11.
+* **برنامج Antigravity:** مثبت ويعمل على جهازك.
+* **بيئة Node.js (الإصدار 18 فما فوق):**
+  > 💡 **ملاحظة ذكية:** لا تقلق إذا لم تكن قد قمت بتثبيت Node.js مسبقاً! يقوم ملف التثبيت التلقائي `install.bat` بفحص جهازك وتثبيت Node.js LTS لك تلقائياً وبصمت عبر `winget`.
+
+---
+
 ## ✨ المميزات الرئيسية
 
 * 🎯 **توجيه تلقائي لصندوق المحادثة (`dir="auto"`):** بمجرد أن تكتب أول حرف عربي، ينتقل المؤشر والنص فوراً إلى اليمين دون الحاجة للضغط على أي اختصار يدوي.
@@ -33,10 +42,10 @@
 
 ## 🚀 طريقة التثبيت (بضغطة زر واحدة)
 
-### الطريقة الأولى: التحميل والتشغيل المباشر
+### الطريقة الأولى: التحميل والتشغيل المباشر (الموصى بها)
 1. قم بتحميل المشروع كملف ZIP أو استنسخه عبر Git:
    ```bash
-   git clone https://github.com/your-username/antigravity-arabic-rtl.git
+   git clone https://github.com/Khfaji/antigravity-arabic-rtl.git
    ```
 2. اضغط مرتين (Double Click) على الملف:
    👉 **`install.bat`**
@@ -47,7 +56,7 @@
 ### الطريقة الثانية: عبر سطر أوامر PowerShell (أمر واحد فقط)
 افتح **PowerShell** والصق هذا الأمر:
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/your-username/antigravity-arabic-rtl/main/install.ps1' -OutFile '$env:TEMP\install.ps1'; & '$env:TEMP\install.ps1'"
+powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Khfaji/antigravity-arabic-rtl/main/install.ps1' -OutFile '$env:TEMP\install.ps1'; & '$env:TEMP\install.ps1'"
 ```
 
 ---
@@ -82,6 +91,11 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 * Injects global AI instructions (`AGENTS.md`) so responses are natively formatted with RTL.
 * Runs silently in the background via a lightweight daemon with zero external npm dependencies.
 * One-click installation via `install.bat`.
+
+### Prerequisites
+* Windows 10 or 11
+* Google Antigravity installed
+* Node.js 18+ (Automatically installed by `install.bat` via winget if not found)
 
 ### License
 This project is licensed under the [MIT License](LICENSE).
