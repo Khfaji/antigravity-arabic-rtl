@@ -22,9 +22,13 @@ const INJECT_CODE = `
     document.head.appendChild(style);
   }
   style.textContent = \`
-    /* Automatic RTL detection for Arabic texts and messages */
+    /* Automatic RTL detection for Arabic texts, messages, and queued inputs */
     .whitespace-pre-wrap,
     [class*="message"],
+    [class*="step"],
+    [class*="queue"],
+    [class*="steer"],
+    [class*="bubble"],
     textarea,
     input,
     div[contenteditable="true"] {
@@ -33,15 +37,9 @@ const INJECT_CODE = `
     }
   \`;
 
-  // 2. Fix elements direction
+  // 2. Fix elements direction including Queued messages and all Arabic elements
   function fixElements(root = document) {
-    // Fix message containers
-    const msgs = root.querySelectorAll ? root.querySelectorAll('.whitespace-pre-wrap, p') : [];
-    msgs.forEach(el => {
-      if (el.getAttribute('dir') !== 'auto') {
-        el.setAttribute('dir', 'auto');
-      }
-    });
+    if (!root) return;
 
     // Fix chat input editor box
     const editors = root.querySelectorAll ? root.querySelectorAll('div[contenteditable="true"], .cursor-text') : [];
@@ -52,11 +50,36 @@ const INJECT_CODE = `
         el.style.unicodeBidi = 'plaintext';
       }
     });
+
+    // Fix all Arabic text nodes and their containers (Queued, user, assistant)
+    try {
+      const targetRoot = root.body || (root.nodeType === 1 ? root : document.body);
+      if (!targetRoot) return;
+      const walker = document.createTreeWalker(targetRoot, NodeFilter.SHOW_TEXT, null, false);
+      const elementsToFix = new Set();
+      let node;
+      while (node = walker.nextNode()) {
+        if (/[\\u0600-\\u06FF]/.test(node.nodeValue)) {
+          if (node.parentElement) {
+            elementsToFix.add(node.parentElement);
+            const block = node.parentElement.closest('div, p, li, span');
+            if (block) elementsToFix.add(block);
+          }
+        }
+      }
+      elementsToFix.forEach(el => {
+        if (el.getAttribute('dir') !== 'auto') {
+          el.setAttribute('dir', 'auto');
+          el.style.unicodeBidi = 'plaintext';
+          el.style.textAlign = 'start';
+        }
+      });
+    } catch (e) {}
   }
 
   fixElements(document);
 
-  // 3. Persistent MutationObserver for newly added messages and tabs
+  // 3. Persistent MutationObserver for newly added messages, queued items, and tabs
   if (!window.__antigravity_rtl_observer) {
     window.__antigravity_rtl_observer = new MutationObserver((mutations) => {
       for (const m of mutations) {
