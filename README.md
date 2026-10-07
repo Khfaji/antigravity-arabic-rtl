@@ -1,10 +1,29 @@
+<div align="center">
+
 # 🚀 Antigravity Arabic Suite: Full Arabic & RTL Engine
 **محرك التعريب وتكامل الواجهة العربية الشامل لـ Google Antigravity & Antigravity IDE بضغطة زر واحدة.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D6.svg)](https://microsoft.com)
-[![Node.js: 18+](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org)
-[![Status: Production Ready](https://img.shields.io/badge/Status-Production_Ready-brightgreen.svg)]()
+<br />
+
+<a href="https://github.com/Khfaji/antigravity-arabic-rtl/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/releases/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Releases&amp;valueColor=38bdf8&amp;logoColor=38bdf8" /><img alt="Releases" src="https://shieldcn.dev/github/releases/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Releases&amp;valueColor=0284c7&amp;logoColor=0284c7" /></picture></a>
+<a href="https://github.com/Khfaji/antigravity-arabic-rtl/stargazers"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Stars&amp;valueColor=facc15&amp;logoColor=facc15" /><img alt="Stars" src="https://shieldcn.dev/github/stars/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Stars&amp;valueColor=d97706&amp;logoColor=d97706" /></picture></a>
+<a href="https://github.com/Khfaji/antigravity-arabic-rtl/forks"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/forks/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Forks&amp;valueColor=c084fc&amp;logoColor=c084fc" /><img alt="Forks" src="https://shieldcn.dev/github/forks/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Forks&amp;valueColor=9333ea&amp;logoColor=9333ea" /></picture></a>
+<a href="https://github.com/Khfaji/antigravity-arabic-rtl"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/license/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=License&amp;valueColor=4ade80&amp;logoColor=4ade80" /><img alt="License" src="https://shieldcn.dev/github/license/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=License&amp;valueColor=16a34a&amp;logoColor=16a34a" /></picture></a>
+
+<br />
+
+<a href="https://github.com/Khfaji/antigravity-arabic-rtl/graphs/contributors"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/contributors/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Contributors&amp;valueColor=fb7185&amp;logoColor=fb7185" /><img alt="Contributors" src="https://shieldcn.dev/github/contributors/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Contributors&amp;valueColor=e11d48&amp;logoColor=e11d48" /></picture></a>
+<a href="https://github.com/Khfaji/antigravity-arabic-rtl/pulls?q=is%3Apr+is%3Aopen"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/open-prs/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Open+PRs&amp;valueColor=22c55e&amp;logoColor=22c55e" /><img alt="Open PRs" src="https://shieldcn.dev/github/open-prs/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Open+PRs&amp;valueColor=15803d&amp;logoColor=15803d" /></picture></a>
+<a href="https://github.com/Khfaji/antigravity-arabic-rtl/pulls?q=is%3Apr+is%3Aclosed"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/closed-prs/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Closed+PRs&amp;valueColor=94a3b8&amp;logoColor=94a3b8" /><img alt="Closed PRs" src="https://shieldcn.dev/github/closed-prs/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Closed+PRs&amp;valueColor=64748b&amp;logoColor=64748b" /></picture></a>
+<a href="https://github.com/Khfaji/antigravity-arabic-rtl/pulls?q=is%3Apr+is%3Amerged"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/merged-prs/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Merged+PRs&amp;valueColor=a855f7&amp;logoColor=a855f7" /><img alt="Merged PRs" src="https://shieldcn.dev/github/merged-prs/Khfaji/antigravity-arabic-rtl.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Merged+PRs&amp;valueColor=7e22ce&amp;logoColor=7e22ce" /></picture></a>
+
+<br />
+<br />
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=dark&amp;font=space-grotesk" /><img alt="Built in IRAQ" src="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=light&amp;font=space-grotesk" /></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Built%20by-a%20human.svg?variant=secondary&amp;logo=%F0%9F%91%A8%E2%80%8D%F0%9F%92%BB&amp;size=xs&amp;mode=dark&amp;font=space-grotesk"><img alt="Built by a Human" src="https://shieldcn.dev/badge/Built%20by-a%20human.svg?variant=secondary&amp;logo=%F0%9F%91%A8%E2%80%8D%F0%9F%92%BB&amp;size=xs&amp;mode=light&amp;font=space-grotesk"></picture>
+
+</div>
 
 ---
 
@@ -27,9 +46,9 @@
 * 🎯 **توجيه ديناميكي للسطور والفقرات (`unicode-bidi: plaintext`):** يتيح كتابة فقرات مشتركة، بحيث يبدأ السطر العربي من اليمين تماماً، والسطر الإنجليزي من أقصى اليسار داخل نفس صندوق الإدخال.
 * ⚖️ **حساب غلبة الحروف (Predominant BiDi Engine):** السطر الذي يحتوي 90% إنجليزي مع كلمة عربية يبقى LTR، بينما السطر ذو الغالبية العربية يتجه لليمين تلقائياً.
 * ⏳ **حل جذري لقائمة الانتظار (Queued Messages):**
-  - الرسائل العربية تستقر في اليمين، وتنعكس أدوات التحكم فيها (إرسال $\leftarrow$ تعديل $\leftarrow$ حذف).
+  - الرسائل العربية تستقر في اليمين، وتترتب أدوات التحكم فيها بالترتيب (حذف $\leftarrow$ تعديل $\leftarrow$ إرسال).
   - سهم الإرسال العربي ينقلب أفقياً (`scaleX(-1)`) ليشير باتجاه اليسار المناسب للـ RTL.
-  - الرسائل الإنجليزية تحتفظ بمحاذاتها اليسارية وترتيب أدواتها الأصلي (حذف $\leftarrow$ تعديل $\leftarrow$ إرسال).
+  - الرسائل الإنجليزية تحتفظ بمحاذاتها اليسارية وترتيب أدواتها (Send $\rightarrow$ Edit $\rightarrow$ Delete).
 * 🌲 **محرك المراقبة الشاملة والمستمرة (Hybrid Observer + Sync Engine):** يراقب كل تغيرات الـ DOM ويدمج تزامناً دورياً خفيفاً للغاية (< 15MB ذاكرة) لضمان تطبيق القواعد على أي رسالة جديدة فور إضافتها.
 * 💻 **دعم متكامل وشامل (Standalone Desktop App & Antigravity IDE):** تثبيت وتفعيل إضافة الـ RTL الرسمية داخل محرر IDE برمجياً وبصمت تام.
 * 🤖 **قواعد التوجيه المعرفي للذكاء الاصطناعي (`AGENTS.md` / `GEMINI.md`):** حقن تعليمات إلزامية تجبر الوكيل والمودل على صياغة الردود العربية بتغليف RTL صحيح مع عزل الأكواد بمسارات LTR واضحة.
@@ -87,6 +106,14 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 
 لحذف الخدمة واستعادة إعدادات التطبيق الافتراضية بنظافة تامة:
 * شغّل ملف **`uninstall.bat`** وستتم إزالة كافة التعديلات والقواعد بأمان.
+
+<br />
+
+<div align="center">
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=dark&amp;font=space-grotesk" /><img alt="Built in IRAQ" src="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=light&amp;font=space-grotesk" /></picture>
+
+</div>
 
 </div>
 
