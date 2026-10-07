@@ -14,7 +14,7 @@ const devToolsPortFiles = [
 
 const INJECT_CODE = `
 (function() {
-  // 1. Inject or update smart RTL styling
+  // 1. Update CSS: remove unicode-bidi from contenteditable to kill the space-jump bug!
   let style = document.getElementById('antigravity-global-rtl');
   if (!style) {
     style = document.createElement('style');
@@ -22,50 +22,73 @@ const INJECT_CODE = `
     document.head.appendChild(style);
   }
   style.textContent = \`
-    /* Smart Bidirectional layout */
-    [dir="rtl"] {
+    /* Editor styling - NO unicode-bidi: plaintext to prevent space cursor jump */
+    div[contenteditable="true"][dir="rtl"],
+    textarea[dir="rtl"],
+    input[dir="rtl"] {
+      direction: rtl !important;
+      text-align: right !important;
+      unicode-bidi: normal !important;
+    }
+    div[contenteditable="true"][dir="ltr"],
+    textarea[dir="ltr"],
+    input[dir="ltr"] {
+      direction: ltr !important;
+      text-align: left !important;
+      unicode-bidi: normal !important;
+    }
+
+    /* Messages and general RTL elements */
+    [dir="rtl"]:not(div[contenteditable="true"]) {
       direction: rtl !important;
       text-align: right !important;
     }
-    [dir="ltr"] {
-      direction: ltr !important;
-      text-align: left !important;
+    .whitespace-pre-wrap[dir="rtl"] {
+      direction: rtl !important;
+      text-align: right !important;
     }
-    .whitespace-pre-wrap,
-    p, div[contenteditable="true"] {
-      unicode-bidi: plaintext !important;
+
+    /* User message / queued message flex container alignment */
+    .user-msg-rtl {
+      direction: rtl !important;
+      justify-content: flex-start !important;
+    }
+    .user-msg-rtl > div {
+      text-align: right !important;
     }
   \`;
 
-  // 2. Global smart input handler: automatically detects language as you type
-  if (!window.__smart_bidi_input_handler) {
-    window.__smart_bidi_input_handler = function(e) {
-      const target = e.target;
-      if (!target) return;
-      if (target.isContentEditable || target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
-        const text = target.innerText || target.value || target.textContent || '';
-        if (/[\\u0600-\\u06FF]/.test(text)) {
-          target.setAttribute('dir', 'rtl');
-          target.style.direction = 'rtl';
-          target.style.textAlign = 'right';
-        } else if (text.trim().length > 0) {
-          target.setAttribute('dir', 'ltr');
-          target.style.direction = 'ltr';
-          target.style.textAlign = 'left';
-        } else {
-          target.removeAttribute('dir');
-          target.style.direction = '';
-          target.style.textAlign = '';
-        }
+  // 2. Fix the live editor input handler without space jump
+  window.__smart_bidi_input_handler = function(e) {
+    const target = e.target;
+    if (!target) return;
+    if (target.isContentEditable || target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+      const text = target.innerText || target.value || target.textContent || '';
+      if (/[\\u0600-\\u06FF]/.test(text)) {
+        target.setAttribute('dir', 'rtl');
+        target.style.setProperty('direction', 'rtl', 'important');
+        target.style.setProperty('text-align', 'right', 'important');
+        target.style.setProperty('unicode-bidi', 'normal', 'important');
+      } else if (text.trim().length > 0) {
+        target.setAttribute('dir', 'ltr');
+        target.style.setProperty('direction', 'ltr', 'important');
+        target.style.setProperty('text-align', 'left', 'important');
+        target.style.setProperty('unicode-bidi', 'normal', 'important');
+      } else {
+        target.removeAttribute('dir');
+        target.style.direction = '';
+        target.style.textAlign = '';
+        target.style.unicodeBidi = '';
       }
-    };
-    document.addEventListener('input', window.__smart_bidi_input_handler, true);
-    document.addEventListener('keyup', window.__smart_bidi_input_handler, true);
-  }
+    }
+  };
+  document.removeEventListener('input', window.__smart_bidi_input_handler, true);
+  document.removeEventListener('keyup', window.__smart_bidi_input_handler, true);
+  document.addEventListener('input', window.__smart_bidi_input_handler, true);
+  document.addEventListener('keyup', window.__smart_bidi_input_handler, true);
 
-  // 3. Scan & align all Arabic elements (messages, queued items, etc.)
-  function scanAndAlign(root) {
-    if (!root) return;
+  // 3. Scan & align all Arabic messages AND their parent flex containers
+  function fixAllArabic(root = document) {
     try {
       const targetRoot = root.body || (root.nodeType === 1 ? root : document.body);
       if (!targetRoot) return;
@@ -73,14 +96,17 @@ const INJECT_CODE = `
       let node;
       while (node = walker.nextNode()) {
         if (/[\\u0600-\\u06FF]/.test(node.nodeValue)) {
-          let el = node.parentElement;
-          if (el) {
-            const block = el.closest('div, p, span, li, [class*="step"], [class*="bubble"]');
-            if (block && !block.closest('pre, code')) {
-              block.setAttribute('dir', 'rtl');
-              block.style.direction = 'rtl';
-              block.style.textAlign = 'right';
-              block.style.unicodeBidi = 'plaintext';
+          const el = node.parentElement;
+          if (el && !el.closest('pre, code')) {
+            el.setAttribute('dir', 'rtl');
+            el.style.direction = 'rtl';
+            el.style.textAlign = 'right';
+
+            const userRow = el.closest('.whitespace-pre-wrap, [class*="user-input-step"], [class*="bg-card"], [class*="flex-row"]');
+            if (userRow) {
+              userRow.setAttribute('dir', 'rtl');
+              userRow.style.direction = 'rtl';
+              userRow.classList.add('user-msg-rtl');
             }
           }
         }
@@ -88,18 +114,16 @@ const INJECT_CODE = `
     } catch (e) {}
   }
 
-  scanAndAlign(document);
+  fixAllArabic(document);
 
-  // 4. Attach persistent observer for new messages and queued items
+  // 4. Update persistent observer
   if (window.__antigravity_rtl_observer) {
     window.__antigravity_rtl_observer.disconnect();
   }
   window.__antigravity_rtl_observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const node of m.addedNodes) {
-        if (node.nodeType === 1) {
-          scanAndAlign(node);
-        }
+        if (node.nodeType === 1) fixAllArabic(node);
       }
     }
   });
