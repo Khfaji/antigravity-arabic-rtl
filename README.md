@@ -3,25 +3,13 @@
 # 🚀 Antigravity Arabic Suite: Full Arabic & RTL Engine
 **محرك التعريب وتكامل الواجهة العربية الشامل لـ Google Antigravity & Antigravity IDE بضغطة زر واحدة.**
 
-<br />
-
-<a href="https://github.com/Khfaji/antigravity-arabic-suite/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/releases/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Releases&amp;valueColor=38bdf8&amp;logoColor=38bdf8" /><img alt="Releases" src="https://shieldcn.dev/github/releases/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Releases&amp;valueColor=0284c7&amp;logoColor=0284c7" /></picture></a>
-<a href="https://github.com/Khfaji/antigravity-arabic-suite/stargazers"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Stars&amp;valueColor=facc15&amp;logoColor=facc15" /><img alt="Stars" src="https://shieldcn.dev/github/stars/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Stars&amp;valueColor=d97706&amp;logoColor=d97706" /></picture></a>
-<a href="https://github.com/Khfaji/antigravity-arabic-suite/forks"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/forks/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Forks&amp;valueColor=c084fc&amp;logoColor=c084fc" /><img alt="Forks" src="https://shieldcn.dev/github/forks/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Forks&amp;valueColor=9333ea&amp;logoColor=9333ea" /></picture></a>
-<a href="https://github.com/Khfaji/antigravity-arabic-suite"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/license/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=License&amp;valueColor=4ade80&amp;logoColor=4ade80" /><img alt="License" src="https://shieldcn.dev/github/license/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=License&amp;valueColor=16a34a&amp;logoColor=16a34a" /></picture></a>
-
-<br />
-
-<a href="https://github.com/Khfaji/antigravity-arabic-suite/graphs/contributors"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/contributors/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Contributors&amp;valueColor=fb7185&amp;logoColor=fb7185" /><img alt="Contributors" src="https://shieldcn.dev/github/contributors/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Contributors&amp;valueColor=e11d48&amp;logoColor=e11d48" /></picture></a>
-<a href="https://github.com/Khfaji/antigravity-arabic-suite/pulls?q=is%3Apr+is%3Aopen"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/open-prs/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Open+PRs&amp;valueColor=22c55e&amp;logoColor=22c55e" /><img alt="Open PRs" src="https://shieldcn.dev/github/open-prs/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Open+PRs&amp;valueColor=15803d&amp;logoColor=15803d" /></picture></a>
-<a href="https://github.com/Khfaji/antigravity-arabic-suite/pulls?q=is%3Apr+is%3Aclosed"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/closed-prs/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Closed+PRs&amp;valueColor=94a3b8&amp;logoColor=94a3b8" /><img alt="Closed PRs" src="https://shieldcn.dev/github/closed-prs/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Closed+PRs&amp;valueColor=64748b&amp;logoColor=64748b" /></picture></a>
-<a href="https://github.com/Khfaji/antigravity-arabic-suite/pulls?q=is%3Apr+is%3Amerged"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/merged-prs/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Merged+PRs&amp;valueColor=a855f7&amp;logoColor=a855f7" /><img alt="Merged PRs" src="https://shieldcn.dev/github/merged-prs/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Merged+PRs&amp;valueColor=7e22ce&amp;logoColor=7e22ce" /></picture></a>
-
-<br />
-<br />
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=dark&amp;font=space-grotesk" /><img alt="Built in IRAQ" src="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=light&amp;font=space-grotesk" /></picture>
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Built%20by-a%20human.svg?variant=secondary&amp;logo=%F0%9F%91%A8%E2%80%8D%F0%9F%92%BB&amp;size=xs&amp;mode=dark&amp;font=space-grotesk"><img alt="Built by a Human" src="https://shieldcn.dev/badge/Built%20by-a%20human.svg?variant=secondary&amp;logo=%F0%9F%91%A8%E2%80%8D%F0%9F%92%BB&amp;size=xs&amp;mode=light&amp;font=space-grotesk"></picture>
+<p align="center">
+  <a href="https://github.com/Khfaji/antigravity-arabic-suite/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/releases/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Releases&amp;valueColor=38bdf8&amp;logoColor=38bdf8" /><img alt="Releases" src="https://shieldcn.dev/github/releases/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Releases&amp;valueColor=0284c7&amp;logoColor=0284c7" /></picture></a>
+  <a href="https://github.com/Khfaji/antigravity-arabic-suite/stargazers"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Stars&amp;valueColor=facc15&amp;logoColor=facc15" /><img alt="Stars" src="https://shieldcn.dev/github/stars/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Stars&amp;valueColor=d97706&amp;logoColor=d97706" /></picture></a>
+  <a href="https://github.com/Khfaji/antigravity-arabic-suite/forks"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/forks/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=Forks&amp;valueColor=c084fc&amp;logoColor=c084fc" /><img alt="Forks" src="https://shieldcn.dev/github/forks/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=Forks&amp;valueColor=9333ea&amp;logoColor=9333ea" /></picture></a>
+  <a href="https://github.com/Khfaji/antigravity-arabic-suite"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/license/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=dark&amp;font=space-grotesk&amp;label=License&amp;valueColor=4ade80&amp;logoColor=4ade80" /><img alt="License" src="https://shieldcn.dev/github/license/Khfaji/antigravity-arabic-suite.svg?variant=secondary&amp;size=xs&amp;mode=light&amp;font=space-grotesk&amp;label=License&amp;valueColor=16a34a&amp;logoColor=16a34a" /></picture></a>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=dark&amp;font=space-grotesk" /><img alt="Built in IRAQ" src="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=light&amp;font=space-grotesk" /></picture>
+</p>
 
 </div>
 
@@ -60,22 +48,17 @@
 
 ## 🚀 التثبيت السريع (بضغطة زر واحدة)
 
+### 1️⃣ الطريقة المباشرة (تحميل بنقرة واحدة - موصى بها)
+
 <div align="center">
 
-[![تحميل مثبت الحزمة بنقرة واحدة](https://img.shields.io/badge/%D8%AA%D8%AD%D9%85%D9%8A%D9%84%20%D8%A7%D9%84%D9%85%D8%AB%D8%A8%D8%AA%20%D8%A7%D9%84%D9%81%D9%88%D8%B1%D9%8A-Antigravity--Arabic--Setup.bat-0284c7?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Khfaji/antigravity-arabic-suite/releases/download/v1.0.0/Antigravity-Arabic-Setup.bat)
-
-<br/>
-
-**[⬇️ اضغط هنا لتحميل المثبت الفوري (Antigravity-Arabic-Setup.bat)](https://github.com/Khfaji/antigravity-arabic-suite/releases/download/v1.0.0/Antigravity-Arabic-Setup.bat)**
+<a href="https://github.com/Khfaji/antigravity-arabic-suite/releases/download/v1.0.0/Antigravity-Arabic-Setup.bat">
+  <img src="https://img.shields.io/badge/Download_Installer-Antigravity--Arabic--Setup.bat-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Download Installer" />
+</a>
 
 </div>
 
-<br/>
-
-### 1️⃣ الطريقة الأسهل: تحميل ملف التثبيت المباشر (موصى بها للجميع)
-1. **حمّل ملف المثبت الفوري:** [**Antigravity-Arabic-Setup.bat**](https://github.com/Khfaji/antigravity-arabic-suite/releases/download/v1.0.0/Antigravity-Arabic-Setup.bat) (حجمه أقل من 1 كيلوبايت!).
-2. **شغّل الملف بنقرة مزدوجة (Double Click):**
-   - سيقوم بسحب أحدث الملفات تلقائياً وتثبيتها وتفعيل الإقلاع المزدوج مع التطبيق والـ IDE فوراً بدون أي تدخل منك.
+* بعد تحميل الملف الصغير (أقل من 1KB)، فقط شغله بنقرة مزدوجة (`Double-Click`) وسيتولى تثبيت وتهيئة كل شيء تلقائياً.
 
 ---
 
