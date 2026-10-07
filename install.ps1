@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 <#
 .SYNOPSIS
     One-click installer for Antigravity Arabic & RTL Support
@@ -103,18 +103,42 @@ if ($ideCmd) {
     }
 }
 
-# 6. Register Startup (Registry + Startup Folder)
-Write-Host "[6/6] تسجيل التشغيل التلقائي مع الويندوز..." -ForegroundColor Yellow
+# 6. Register Startup (Registry + Startup Folder) & App Dual-Launcher
+Write-Host "[6/6] تسجيل التشغيل التلقائي مع الويندوز واقتران التطبيق..." -ForegroundColor Yellow
 $vbsPath = Join-Path $targetDir "start_hidden.vbs"
-$regValue = "wscript.exe `"$vbsPath`""
+$launcherVbs = Join-Path $targetDir "antigravity_launcher.vbs"
+Copy-Item (Join-Path $scriptDir "src\antigravity_launcher.vbs") -Destination $launcherVbs -Force
 
 # Register in HKCU Run
+$regValue = "wscript.exe `"$vbsPath`""
 Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "AntigravityRTLService" -Value $regValue
 
 # Copy to Startup folder as backup
 $startupDir = [System.IO.Path]::Combine($appDataDir, "Microsoft\Windows\Start Menu\Programs\Startup")
 if (Test-Path $startupDir) {
     Copy-Item $vbsPath -Destination (Join-Path $startupDir "AntigravityRTL.vbs") -Force
+}
+
+# Attach to Antigravity Shortcuts (Start Menu & Desktop)
+$antigravityExe = "$env:LOCALAPPDATA\Programs\antigravity\Antigravity.exe"
+if (Test-Path $antigravityExe) {
+    $wsh = New-Object -ComObject WScript.Shell
+    $shortcutPaths = @(
+        "$appDataDir\Microsoft\Windows\Start Menu\Programs\Antigravity.lnk",
+        "$userProfile\Desktop\Antigravity.lnk",
+        "$userProfile\OneDrive\Desktop\Antigravity.lnk"
+    )
+    foreach ($sc in $shortcutPaths) {
+        if (Test-Path $sc) {
+            try {
+                $lnk = $wsh.CreateShortcut($sc)
+                $lnk.TargetPath = "wscript.exe"
+                $lnk.Arguments = "`"$launcherVbs`""
+                $lnk.IconLocation = "$antigravityExe,0"
+                $lnk.Save()
+            } catch {}
+        }
+    }
 }
 
 # Start the service now
