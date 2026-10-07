@@ -77,8 +77,33 @@ Write-Host "[4/5] تثبيت القواعد العامة للذكاء الاصط
 Copy-Item (Join-Path $scriptDir "rules\AGENTS.md") -Destination (Join-Path $geminiRulesDir "AGENTS.md") -Force
 Copy-Item (Join-Path $scriptDir "rules\GEMINI.md") -Destination (Join-Path $geminiConfigDir "GEMINI.md") -Force
 
-# 5. Register Startup (Registry + Startup Folder)
-Write-Host "[5/5] تسجيل التشغيل التلقائي مع الويندوز..." -ForegroundColor Yellow
+# 5. Install Antigravity IDE Extension (Auto-detected)
+$ideCmd = Get-Command antigravity-ide.cmd -ErrorAction SilentlyContinue
+if (-not $ideCmd) {
+    $defaultIdePaths = @(
+        "$env:LOCALAPPDATA\Programs\Antigravity IDE\bin\antigravity-ide.cmd",
+        "$env:ProgramFiles\Antigravity IDE\bin\antigravity-ide.cmd"
+    )
+    foreach ($p in $defaultIdePaths) {
+        if (Test-Path $p) {
+            $ideCmd = $p
+            break
+        }
+    }
+}
+
+if ($ideCmd) {
+    Write-Host "[5/6] تم اكتشاف Antigravity IDE! جاري تثبيت إضافة الـ RTL تلقائياً..." -ForegroundColor Yellow
+    try {
+        & $ideCmd --install-extension omid-io.antigravity-rtl 2>$null
+        Write-Host "✅ تم تثبيت إضافة RTL داخل Antigravity IDE بنجاح!" -ForegroundColor Green
+    } catch {
+        Write-Host "تخطي تثبيت إضافة الـ IDE." -ForegroundColor DarkYellow
+    }
+}
+
+# 6. Register Startup (Registry + Startup Folder)
+Write-Host "[6/6] تسجيل التشغيل التلقائي مع الويندوز..." -ForegroundColor Yellow
 $vbsPath = Join-Path $targetDir "start_hidden.vbs"
 $regValue = "wscript.exe `"$vbsPath`""
 
@@ -91,7 +116,7 @@ if (Test-Path $startupDir) {
     Copy-Item $vbsPath -Destination (Join-Path $startupDir "AntigravityRTL.vbs") -Force
 }
 
-# 6. Start the service now
+# Start the service now
 Write-Host "🚀 تشغيل الخدمة في الخلفية الآن..." -ForegroundColor Yellow
 Start-Process "wscript.exe" -ArgumentList "`"$vbsPath`""
 
@@ -103,5 +128,6 @@ Write-Host "المميزات المفعلة الآن:" -ForegroundColor Cyan
 Write-Host "1. صندوق المحادثة: يتجه لليمين تلقائياً عند كتابة أي حرف عربي." -ForegroundColor White
 Write-Host "2. رسائلك المرسلة: تستقر في اليمين بشكل سليم ومنظم." -ForegroundColor White
 Write-Host "3. ردود المساعد: تعرض من اليمين لليسار مع الحفاظ على الأكواد." -ForegroundColor White
-Write-Host "4. يعمل بصمت في الخلفية ويبدأ تلقائياً مع تشغيل جهازك." -ForegroundColor White
+Write-Host "4. محرر Antigravity IDE: تم تثبيت وتفعيل إضافة RTL تلقائياً داخله." -ForegroundColor White
+Write-Host "5. يعمل بصمت في الخلفية ويبدأ تلقائياً مع تشغيل جهازك." -ForegroundColor White
 Write-Host ""

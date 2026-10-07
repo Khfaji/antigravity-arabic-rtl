@@ -18,7 +18,25 @@ $appDataDir = [System.Environment]::GetFolderPath('ApplicationData')
 $startupFile = [System.IO.Path]::Combine($appDataDir, "Microsoft\Windows\Start Menu\Programs\Startup\AntigravityRTL.vbs")
 if (Test-Path $startupFile) { Remove-Item $startupFile -Force }
 
-# 4. Remove target folder
+# 4. Remove IDE Extension if installed
+$ideCmd = Get-Command antigravity-ide.cmd -ErrorAction SilentlyContinue
+if (-not $ideCmd) {
+    $defaultIdePaths = @(
+        "$env:LOCALAPPDATA\Programs\Antigravity IDE\bin\antigravity-ide.cmd",
+        "$env:ProgramFiles\Antigravity IDE\bin\antigravity-ide.cmd"
+    )
+    foreach ($p in $defaultIdePaths) {
+        if (Test-Path $p) {
+            $ideCmd = $p
+            break
+        }
+    }
+}
+if ($ideCmd) {
+    & $ideCmd --uninstall-extension omid-io.antigravity-rtl 2>$null
+}
+
+# 5. Remove target folder
 $targetDir = Join-Path $appDataDir "antigravity-rtl"
 if (Test-Path $targetDir) { Remove-Item $targetDir -Recurse -Force }
 
