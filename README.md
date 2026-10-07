@@ -53,7 +53,7 @@
 * 💻 **دعم متكامل وشامل (Standalone Desktop App & Antigravity IDE):** تثبيت وتفعيل إضافة الـ RTL الرسمية داخل محرر IDE برمجياً وبصمت تام.
 * 🤖 **قواعد التوجيه المعرفي للذكاء الاصطناعي (`AGENTS.md` / `GEMINI.md`):** حقن تعليمات إلزامية تجبر الوكيل والمودل على صياغة الردود العربية بتغليف RTL صحيح مع عزل الأكواد بمسارات LTR واضحة.
 * 🔄 **إعادة حقن واستجابة فورية بعد التحديثات (Update-Resilient CDP Engine):** ترصد الخدمة في الخلفية تشغيل نوافذ Antigravity فورياً وتقترن بها عبر بروتوكول التشخيص (CDP)، مما يضمن استمرار وتطبيق دعم العربية تلقائياً حتى عند قيام Google بطرح تحديثات واستبدال ملفات التطبيق.
-* 🚀 **إقلاع مزدوج ذكي (Dual-Launcher & Shortcut Pairing):** يقترن محرك الـ RTL تلقائياً باختصارات تشغيل البرنامج في سطح المكتب وقائمة ابدأ؛ فيعمل الدعم تلقائياً عند فتحك للتطبيق حتى لو لم تكن الخدمة تعمل عند تسجيل الدخول!
+* 🚀 **إقلاع مزدوج ذكي وشامل (Antigravity & IDE Dual-Launcher Pairing):** يقترن محرك الـ RTL تلقائياً باختصارات تشغيل كلٍّ من **تطبيق Antigravity ومحرر Antigravity IDE** على سطح المكتب وقائمة ابدأ؛ فيعمل الدعم تلقائياً عند فتحك لأيٍّ منهما حتى لو لم تكن الخدمة تعمل عند تسجيل الدخول!
 * 🛡️ **تشغيل هادئ ومستقل مع بدء النظام:** تعمل الخدمة بخفة تامة مع إقلاع الويندوز (Windows Startup) وبدون تعديل ملفات معقد أو أي تأثير على أداء النظام (< 15MB ذاكرة).
 
 ---
@@ -135,7 +135,7 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 * **True Line-by-Line BiDi:** Allows mixed-language paragraphs in Lexical chat input without cross-line text corruption.
 * **Predominant Language Counting:** Calculates character frequency to determine line direction, keeping code and tech terms strictly LTR.
 * **Smart Queued Messages Handling:** Automatically aligns queued cards with mirrored action buttons and flipped send arrows for RTL messages.
-* **Dual-Launcher & Shortcut Pairing:** Automatically pairs with Desktop & Start Menu shortcuts to fire the background daemon whenever you launch the app, guaranteeing RTL is always active.
+* **Dual-Launcher & Shortcut Pairing:** Automatically pairs with Desktop & Start Menu shortcuts for both **Antigravity and Antigravity IDE** to fire the background daemon whenever you launch either, guaranteeing RTL is always active.
 * **Update-Resilient Architecture:** Runs independently via Chrome DevTools Protocol & Windows Startup, automatically attaching to Antigravity runtime even after Google updates the application packages.
 * **Zero Disruption to Code:** Monaco editor, Markdown code blocks, and syntax containers remain completely LTR.
 * **Seamless Installation:** One-click automated setup with zero manual configuration.
