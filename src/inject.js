@@ -1,6 +1,6 @@
 const INJECT_CODE = `
 (function() {
-  // 1. Global RTL Stylesheet
+  // 1. Global BiDi Stylesheet
   let style = document.getElementById('antigravity-global-rtl');
   if (!style) {
     style = document.createElement('style');
@@ -8,7 +8,7 @@ const INJECT_CODE = `
     document.head.appendChild(style);
   }
   style.textContent = [
-    '/* Editor styling - NO unicode-bidi: plaintext to prevent space cursor jump */',
+    '/* Lexical Chat Input: keep unicode-bidi normal to prevent space cursor jump */',
     'div[contenteditable="true"][dir="rtl"], textarea[dir="rtl"], input[dir="rtl"] {',
     '  direction: rtl !important;',
     '  text-align: right !important;',
@@ -19,20 +19,27 @@ const INJECT_CODE = `
     '  text-align: left !important;',
     '  unicode-bidi: normal !important;',
     '}',
-    '/* General RTL text elements */',
-    '[dir="rtl"]:not(div[contenteditable="true"]) {',
+    '/* Code blocks must ALWAYS stay LTR */',
+    'pre, code, .code-block, .monaco-editor, [class*="shiki"] {',
+    '  direction: ltr !important;',
+    '  text-align: left !important;',
+    '  unicode-bidi: embed !important;',
+    '}',
+    '/* Paragraphs and list items: per-paragraph direction */',
+    'p[dir="rtl"], li[dir="rtl"], h1[dir="rtl"], h2[dir="rtl"], h3[dir="rtl"], h4[dir="rtl"], blockquote[dir="rtl"] {',
     '  direction: rtl !important;',
     '  text-align: right !important;',
     '}',
-    '.whitespace-pre-wrap[dir="rtl"] {',
-    '  direction: rtl !important;',
-    '  text-align: right !important;',
+    'p[dir="ltr"], li[dir="ltr"], h1[dir="ltr"], h2[dir="ltr"], h3[dir="ltr"], h4[dir="ltr"], blockquote[dir="ltr"] {',
+    '  direction: ltr !important;',
+    '  text-align: left !important;',
     '}',
-    '/* User message bubble and Queued message layout */',
-    '.user-msg-rtl {',
-    '  direction: rtl !important;',
-    '  text-align: right !important;',
+    '/* Multi-line messages with mixed language (Arabic line & English line) */',
+    '.whitespace-pre-wrap {',
+    '  unicode-bidi: plaintext !important;',
+    '  text-align: start !important;',
     '}',
+    '/* User message cards alignment */',
     '.user-card-rtl {',
     '  margin-left: auto !important;',
     '  margin-right: 0 !important;',
@@ -40,7 +47,7 @@ const INJECT_CODE = `
     '}'
   ].join('\\n');
 
-  // 2. Smart BiDi Input Handler
+  // 2. Smart BiDi Input Handler for Chat input
   window.__smart_bidi_input_handler = function(e) {
     const target = e.target;
     if (!target) return;
@@ -69,42 +76,61 @@ const INJECT_CODE = `
   document.addEventListener('input', window.__smart_bidi_input_handler, true);
   document.addEventListener('keyup', window.__smart_bidi_input_handler, true);
 
-  // 3. Scan & align all Arabic messages and queued messages
+  // 3. Granular Paragraph & Line BiDi Styler
   function fixAllArabic(root) {
     try {
       const targetRoot = (root && root.body) ? root.body : ((root && root.nodeType === 1) ? root : document.body);
       if (!targetRoot) return;
 
-      const walker = document.createTreeWalker(targetRoot, NodeFilter.SHOW_TEXT, null, false);
-      let node;
-      while (node = walker.nextNode()) {
-        if (/[\\u0600-\\u06FF]/.test(node.nodeValue)) {
-          const el = node.parentElement;
-          if (el && !el.closest('pre, code')) {
-            el.setAttribute('dir', 'rtl');
-            el.style.direction = 'rtl';
-            el.style.textAlign = 'right';
+      // Style paragraphs, headings, list items, and table cells individually
+      const blockElements = targetRoot.querySelectorAll 
+        ? targetRoot.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, blockquote, td, th')
+        : [];
+      
+      for (let i = 0; i < blockElements.length; i++) {
+        const el = blockElements[i];
+        if (el.closest('pre, code, .code-block, .monaco-editor')) continue;
+        const text = el.innerText || el.textContent || '';
+        // If block has Arabic, set dir="rtl", else if it has Latin, set dir="ltr"
+        if (/[\\u0600-\\u06FF]/.test(text)) {
+          el.setAttribute('dir', 'rtl');
+        } else if (/[A-Za-z]/.test(text)) {
+          el.setAttribute('dir', 'ltr');
+        }
+      }
 
-            // User messages
-            const userMsg = el.closest('.whitespace-pre-wrap, [data-testid="user-input-step"], .group\\\\/user-input-step');
-            if (userMsg) {
-              userMsg.setAttribute('dir', 'rtl');
-              userMsg.classList.add('user-msg-rtl');
-              const cardBorder = userMsg.querySelector ? userMsg.querySelector('[class*="bg-card-border"]') : null;
-              if (cardBorder) {
-                cardBorder.classList.add('user-card-rtl');
-              }
-            }
+      // Check pre-wrap containers (user input steps, prompt text)
+      const preWraps = targetRoot.querySelectorAll ? targetRoot.querySelectorAll('.whitespace-pre-wrap') : [];
+      for (let i = 0; i < preWraps.length; i++) {
+        const el = preWraps[i];
+        if (el.closest('pre, code, .code-block, .monaco-editor')) continue;
+        // Always enable plaintext on pre-wrap so line 1 Arabic goes right and line 2 English goes left!
+        el.style.setProperty('unicode-bidi', 'plaintext', 'important');
+        el.style.setProperty('text-align', 'start', 'important');
+        
+        // Remove forced direction: rtl on the entire container so it doesn't force English lines to the right
+        el.removeAttribute('dir');
+        el.style.direction = '';
 
-            // Queued messages
-            const queuedCard = el.closest('.flex.flex-col.gap-2.w-full.mb-2 > div, [class*="queued"]');
-            if (queuedCard) {
-              queuedCard.setAttribute('dir', 'rtl');
-              queuedCard.style.direction = 'rtl';
-              queuedCard.style.textAlign = 'right';
-            }
+        // If it contains Arabic, align user card to right
+        const text = el.innerText || el.textContent || '';
+        if (/[\\u0600-\\u06FF]/.test(text)) {
+          const userStep = el.closest('[data-testid="user-input-step"], .group\\\\/user-input-step');
+          if (userStep) {
+            const cardBorder = userStep.querySelector('[class*="bg-card-border"]');
+            if (cardBorder) cardBorder.classList.add('user-card-rtl');
           }
         }
+      }
+
+      // Queued messages
+      const queuedElements = targetRoot.querySelectorAll 
+        ? targetRoot.querySelectorAll('.flex.flex-col.gap-2.w-full.mb-2 > div, [class*="queued"]')
+        : [];
+      for (let i = 0; i < queuedElements.length; i++) {
+        const q = queuedElements[i];
+        q.style.setProperty('unicode-bidi', 'plaintext', 'important');
+        q.style.setProperty('text-align', 'start', 'important');
       }
     } catch (e) {}
   }
