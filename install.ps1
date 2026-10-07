@@ -67,16 +67,30 @@ Write-Host "[2/5] إعداد مجلدات النظام..." -ForegroundColor Yell
 New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
 New-Item -ItemType Directory -Path $geminiRulesDir -Force | Out-Null
 
-# 3. Copy Service Files
+# 3. Copy or Download Service Files
 Write-Host "[3/5] تثبيت ملفات الخدمة..." -ForegroundColor Yellow
-Copy-Item (Join-Path $scriptDir "src\service.js") -Destination $targetDir -Force
-Copy-Item (Join-Path $scriptDir "src\inject.js") -Destination $targetDir -Force
-Copy-Item (Join-Path $scriptDir "src\start_hidden.vbs") -Destination $targetDir -Force
+$baseUrl = "https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main"
 
-# 4. Copy AI Rules
+function Fetch-Or-Copy($relPath, $destPath) {
+    $localFile = Join-Path $scriptDir $relPath
+    if (Test-Path $localFile) {
+        Copy-Item $localFile -Destination $destPath -Force
+    } else {
+        $url = "$baseUrl/" + ($relPath.Replace("\", "/"))
+        Invoke-WebRequest -Uri $url -OutFile $destPath -UseBasicParsing
+    }
+}
+
+Fetch-Or-Copy "src\service.js" (Join-Path $targetDir "service.js")
+Fetch-Or-Copy "src\inject.js" (Join-Path $targetDir "inject.js")
+Fetch-Or-Copy "src\start_hidden.vbs" (Join-Path $targetDir "start_hidden.vbs")
+Fetch-Or-Copy "src\antigravity_launcher.vbs" (Join-Path $targetDir "antigravity_launcher.vbs")
+Fetch-Or-Copy "src\antigravity_ide_launcher.vbs" (Join-Path $targetDir "antigravity_ide_launcher.vbs")
+
+# 4. Copy or Download AI Rules
 Write-Host "[4/5] تثبيت القواعد العامة للذكاء الاصطناعي..." -ForegroundColor Yellow
-Copy-Item (Join-Path $scriptDir "rules\AGENTS.md") -Destination (Join-Path $geminiRulesDir "AGENTS.md") -Force
-Copy-Item (Join-Path $scriptDir "rules\GEMINI.md") -Destination (Join-Path $geminiConfigDir "GEMINI.md") -Force
+Fetch-Or-Copy "rules\AGENTS.md" (Join-Path $geminiRulesDir "AGENTS.md")
+Fetch-Or-Copy "rules\GEMINI.md" (Join-Path $geminiConfigDir "GEMINI.md")
 
 # 5. Install Antigravity IDE Extension (Auto-detected)
 $ideCmd = Get-Command antigravity-ide.cmd -ErrorAction SilentlyContinue
@@ -108,8 +122,6 @@ Write-Host "[6/6] تسجيل التشغيل التلقائي مع الويندو
 $vbsPath = Join-Path $targetDir "start_hidden.vbs"
 $launcherVbs = Join-Path $targetDir "antigravity_launcher.vbs"
 $ideLauncherVbs = Join-Path $targetDir "antigravity_ide_launcher.vbs"
-Copy-Item (Join-Path $scriptDir "src\antigravity_launcher.vbs") -Destination $launcherVbs -Force
-Copy-Item (Join-Path $scriptDir "src\antigravity_ide_launcher.vbs") -Destination $ideLauncherVbs -Force
 
 # Register in HKCU Run
 $regValue = "wscript.exe `"$vbsPath`""
