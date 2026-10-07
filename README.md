@@ -60,21 +60,38 @@
 
 ## 🚀 التثبيت السريع (بضغطة زر واحدة)
 
-### الطريقة الأولى: عبر المستودع المباشر (الموصى بها)
-1. قم باستنساخ المستودع أو تحميله:
-   ```bash
-   git clone https://github.com/Khfaji/antigravity-arabic-suite.git
-   ```
-2. اضغط مرتين على:
-   👉 **`install.bat`**
-3. سيتم فحص البيئة، وتثبيت Node.js تلقائياً إن لم يكن موجوداً، وحقن وتفعيل الدعم فورياً!
+<div align="center">
+
+[![تحميل مثبت الحزمة بنقرة واحدة](https://img.shields.io/badge/%D8%AA%D8%AD%D9%85%D9%8A%D9%84%20%D8%A7%D9%84%D9%85%D8%AB%D8%A8%D8%AA%20%D8%A7%D9%84%D9%81%D9%88%D8%B1%D9%8A-Antigravity--Arabic--Setup.bat-0284c7?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Khfaji/antigravity-arabic-suite/releases/download/v1.0.0/Antigravity-Arabic-Setup.bat)
+
+<br/>
+
+**[⬇️ اضغط هنا لتحميل المثبت الفوري (Antigravity-Arabic-Setup.bat)](https://github.com/Khfaji/antigravity-arabic-suite/releases/download/v1.0.0/Antigravity-Arabic-Setup.bat)**
+
+</div>
+
+<br/>
+
+### 1️⃣ الطريقة الأسهل: تحميل ملف التثبيت المباشر (موصى بها للجميع)
+1. **حمّل ملف المثبت الفوري:** [**Antigravity-Arabic-Setup.bat**](https://github.com/Khfaji/antigravity-arabic-suite/releases/download/v1.0.0/Antigravity-Arabic-Setup.bat) (حجمه أقل من 1 كيلوبايت!).
+2. **شغّل الملف بنقرة مزدوجة (Double Click):**
+   - سيقوم بسحب أحدث الملفات تلقائياً وتثبيتها وتفعيل الإقلاع المزدوج مع التطبيق والـ IDE فوراً بدون أي تدخل منك.
 
 ---
 
-### الطريقة الثانية: أمر مباشر وسريع عبر PowerShell
-افتح نافذة **PowerShell** وشغّل الأمر التالي:
+### 2️⃣ الطريقة الثانية: أمر مباشر وفوري عبر PowerShell
+إذا كنت تفضل سطر الأوامر دون تحميل أي ملف يدوياً، افتح نافذة **PowerShell** وشغّل الأمر التالي:
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/install.ps1' -OutFile '$env:TEMP\install.ps1'; & '$env:TEMP\install.ps1'"
+```
+
+---
+
+### 3️⃣ الطريقة الثالثة: للمطورين (عبر المستودع)
+```bash
+git clone https://github.com/Khfaji/antigravity-arabic-suite.git
+cd antigravity-arabic-suite
+install.bat
 ```
 
 ---
