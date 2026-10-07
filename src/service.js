@@ -14,7 +14,7 @@ const devToolsPortFiles = [
 
 const INJECT_CODE = `
 (function() {
-  // 1. Inject or update RTL styling
+  // 1. Inject or update smart RTL styling
   let style = document.getElementById('antigravity-global-rtl');
   if (!style) {
     style = document.createElement('style');
@@ -22,89 +22,88 @@ const INJECT_CODE = `
     document.head.appendChild(style);
   }
   style.textContent = \`
-    /* Automatic RTL detection for Arabic texts, messages, and queued inputs */
+    /* Smart Bidirectional layout */
+    [dir="rtl"] {
+      direction: rtl !important;
+      text-align: right !important;
+    }
+    [dir="ltr"] {
+      direction: ltr !important;
+      text-align: left !important;
+    }
     .whitespace-pre-wrap,
-    [class*="message"],
-    [class*="step"],
-    [class*="queue"],
-    [class*="steer"],
-    [class*="bubble"],
-    textarea,
-    input,
-    div[contenteditable="true"] {
+    p, div[contenteditable="true"] {
       unicode-bidi: plaintext !important;
-      text-align: start !important;
     }
   \`;
 
-  // 2. Fix elements direction including Queued messages and all Arabic elements
-  function fixElements(root = document) {
-    if (!root) return;
-
-    // Fix chat input editor box
-    const editors = root.querySelectorAll ? root.querySelectorAll('div[contenteditable="true"], .cursor-text') : [];
-    editors.forEach(el => {
-      if (el.getAttribute('dir') !== 'auto') {
-        el.setAttribute('dir', 'auto');
-        el.style.textAlign = 'start';
-        el.style.unicodeBidi = 'plaintext';
+  // 2. Global smart input handler: automatically detects language as you type
+  if (!window.__smart_bidi_input_handler) {
+    window.__smart_bidi_input_handler = function(e) {
+      const target = e.target;
+      if (!target) return;
+      if (target.isContentEditable || target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+        const text = target.innerText || target.value || target.textContent || '';
+        if (/[\\u0600-\\u06FF]/.test(text)) {
+          target.setAttribute('dir', 'rtl');
+          target.style.direction = 'rtl';
+          target.style.textAlign = 'right';
+        } else if (text.trim().length > 0) {
+          target.setAttribute('dir', 'ltr');
+          target.style.direction = 'ltr';
+          target.style.textAlign = 'left';
+        } else {
+          target.removeAttribute('dir');
+          target.style.direction = '';
+          target.style.textAlign = '';
+        }
       }
-    });
+    };
+    document.addEventListener('input', window.__smart_bidi_input_handler, true);
+    document.addEventListener('keyup', window.__smart_bidi_input_handler, true);
+  }
 
-    // Fix all Arabic text nodes and their containers (Queued, user, assistant)
+  // 3. Scan & align all Arabic elements (messages, queued items, etc.)
+  function scanAndAlign(root) {
+    if (!root) return;
     try {
       const targetRoot = root.body || (root.nodeType === 1 ? root : document.body);
       if (!targetRoot) return;
       const walker = document.createTreeWalker(targetRoot, NodeFilter.SHOW_TEXT, null, false);
-      const elementsToFix = new Set();
       let node;
       while (node = walker.nextNode()) {
         if (/[\\u0600-\\u06FF]/.test(node.nodeValue)) {
-          if (node.parentElement) {
-            elementsToFix.add(node.parentElement);
-            const block = node.parentElement.closest('div, p, li, span');
-            if (block) elementsToFix.add(block);
+          let el = node.parentElement;
+          if (el) {
+            const block = el.closest('div, p, span, li, [class*="step"], [class*="bubble"]');
+            if (block && !block.closest('pre, code')) {
+              block.setAttribute('dir', 'rtl');
+              block.style.direction = 'rtl';
+              block.style.textAlign = 'right';
+              block.style.unicodeBidi = 'plaintext';
+            }
           }
         }
       }
-      elementsToFix.forEach(el => {
-        if (el.getAttribute('dir') !== 'auto') {
-          el.setAttribute('dir', 'auto');
-          el.style.unicodeBidi = 'plaintext';
-          el.style.textAlign = 'start';
-        }
-      });
     } catch (e) {}
   }
 
-  fixElements(document);
+  scanAndAlign(document);
 
-  // 3. Persistent MutationObserver for newly added messages, queued items, and tabs
-  if (!window.__antigravity_rtl_observer) {
-    window.__antigravity_rtl_observer = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        if (m.type === 'childList') {
-          for (const node of m.addedNodes) {
-            if (node.nodeType === 1) {
-              fixElements(node);
-            }
-          }
-        } else if (m.type === 'attributes' && m.attributeName === 'dir') {
-          if (m.target && m.target.getAttribute('dir') === 'ltr' && 
-              (m.target.getAttribute('contenteditable') === 'true' || m.target.classList.contains('cursor-text'))) {
-            m.target.setAttribute('dir', 'auto');
-          }
+  // 4. Attach persistent observer for new messages and queued items
+  if (window.__antigravity_rtl_observer) {
+    window.__antigravity_rtl_observer.disconnect();
+  }
+  window.__antigravity_rtl_observer = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      for (const node of m.addedNodes) {
+        if (node.nodeType === 1) {
+          scanAndAlign(node);
         }
       }
-    });
-
-    window.__antigravity_rtl_observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['dir']
-    });
-  }
+    }
+  });
+  window.__antigravity_rtl_observer.observe(document.body, { childList: true, subtree: true });
 })();
 `;
 
