@@ -79,9 +79,12 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 
 ## 🛠️ البنية التقنية وميكانيكية العمل
 
-<div align="center">
+<table align="center">
+<tr>
+<td align="center">
 
-<pre align="center"><code>+-------------------------------------------------------------+
+```text
++-------------------------------------------------------------+
 |                 Google Antigravity Runtime                  |
 +------------------------------+------------------------------+
                                |
@@ -94,9 +97,12 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 |  - Predominant Language Detection (Arabic vs Latin Count)   |
 |  - Queued Messages Mirrored Controls & Arrow Inversion      |
 |  - MutationObserver + Periodic Micro-Task Sync              |
-+-------------------------------------------------------------+</code></pre>
++-------------------------------------------------------------+
+```
 
-</div>
+</td>
+</tr>
+</table>
 
 1. **الربط الداخلي الآمن:** يتم الاتصال بنافذة العرض عبر بروتوكول DevTools أو عبر حقن معزول تماماً لا يمس شفرة المصدر الأساسية.
 2. **عزل الأكواد البرمجية:** استثناء صريح لعناصر `pre, code, .monaco-editor, [class*="shiki"]` لضمان عدم تأثر أي كود أو محرر برمجي بالـ RTL.
