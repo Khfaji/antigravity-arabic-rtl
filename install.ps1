@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 <#
 .SYNOPSIS
     One-click installer for Antigravity Arabic & RTL Support
@@ -132,3 +132,4 @@ Write-Host "3. ردود المساعد: تعرض من اليمين لليسار 
 Write-Host "4. محرر Antigravity IDE: تم تثبيت وتفعيل إضافة RTL تلقائياً داخله." -ForegroundColor White
 Write-Host "5. يعمل بصمت في الخلفية ويبدأ تلقائياً مع تشغيل جهازك." -ForegroundColor White
 Write-Host ""
+
