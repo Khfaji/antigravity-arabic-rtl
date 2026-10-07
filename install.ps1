@@ -70,6 +70,7 @@ New-Item -ItemType Directory -Path $geminiRulesDir -Force | Out-Null
 # 3. Copy Service Files
 Write-Host "[3/5] تثبيت ملفات الخدمة..." -ForegroundColor Yellow
 Copy-Item (Join-Path $scriptDir "src\service.js") -Destination $targetDir -Force
+Copy-Item (Join-Path $scriptDir "src\inject.js") -Destination $targetDir -Force
 Copy-Item (Join-Path $scriptDir "src\start_hidden.vbs") -Destination $targetDir -Force
 
 # 4. Copy AI Rules
