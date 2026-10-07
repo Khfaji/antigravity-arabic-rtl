@@ -1,2 +1,4 @@
 Set WshShell = CreateObject("WScript.Shell")
-WshShell.Run """C:\Program Files\nodejs\node.exe"" ""C:\Users\khfaj\AppData\Roaming\antigravity-rtl\service.js""", 0, False
+appData = WshShell.ExpandEnvironmentStrings("%APPDATA%")
+servicePath = appData & "\antigravity-rtl\service.js"
+WshShell.Run "node """ & servicePath & """", 0, False
