@@ -8,7 +8,11 @@
   <a href="https://github.com/Khfaji/antigravity-arabic-suite/stargazers"><img src="https://img.shields.io/github/stars/Khfaji/antigravity-arabic-suite?color=facc15&logo=apachespark" alt="Stars" /></a>
   <a href="https://github.com/Khfaji/antigravity-arabic-suite/forks"><img src="https://img.shields.io/github/forks/Khfaji/antigravity-arabic-suite?color=c084fc" alt="Forks" /></a>
   <a href="https://github.com/Khfaji/antigravity-arabic-suite/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Khfaji/antigravity-arabic-suite?color=4ade80" alt="License" /></a>
-  <img src="https://img.shields.io/badge/Built%20in-IRAQ%20%F0%9F%87%AE%F0%9F%87%B6-dc2626" alt="Built in IRAQ" />
+</p>
+
+<p align="center">
+  <img src="assets/iraq-flag-waving.gif" width="120" alt="العلم العراقي يرفرف" /><br/>
+  <b>صُنِعَ بِكُلِّ فَخْرٍ فِي العِرَاقِ 🇮🇶</b>
 </p>
 
 </div>
@@ -121,7 +125,8 @@ install.bat
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=dark&amp;font=space-grotesk" /><img alt="Built in IRAQ" src="https://shieldcn.dev/flag/iq.svg?variant=secondary&amp;label=Built+in&amp;size=xs&amp;mode=light&amp;font=space-grotesk" /></picture>
+<img src="assets/iraq-flag-waving.gif" width="100" alt="العلم العراقي يرفرف" /><br/>
+<b>صُنِعَ بِكُلِّ فَخْرٍ فِي العِرَاقِ 🇮🇶</b>
 
 </div>
 
