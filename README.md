@@ -81,8 +81,7 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 
 <div align="center">
 
-```text
-+-------------------------------------------------------------+
+<pre align="center"><code>+-------------------------------------------------------------+
 |                 Google Antigravity Runtime                  |
 +------------------------------+------------------------------+
                                |
@@ -95,8 +94,7 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw
 |  - Predominant Language Detection (Arabic vs Latin Count)   |
 |  - Queued Messages Mirrored Controls & Arrow Inversion      |
 |  - MutationObserver + Periodic Micro-Task Sync              |
-+-------------------------------------------------------------+
-```
++-------------------------------------------------------------+</code></pre>
 
 </div>
 
