@@ -8,29 +8,43 @@ const INJECT_CODE = `
     document.head.appendChild(style);
   }
   style.textContent = [
-    '/* Lexical Chat Input: do NOT force direction on editor root */',
-    'div[data-lexical-editor="true"], div[contenteditable="true"] {',
-    '  text-align: start !important;',
-    '  direction: ltr !important;',
-    '}',
-
-    '/* Lexical Paragraphs: each line/paragraph uses plaintext bidi + start alignment */',
-    '/* In plaintext BiDi mode, each line separated by newline/br aligns dynamically */',
+    /* Lexical Chat Input: paragraphs support independent auto direction per line */
     'div[data-lexical-editor="true"] p,',
     'div[contenteditable="true"] p {',
-    '  unicode-bidi: plaintext !important;',
     '  text-align: start !important;',
+    '  unicode-bidi: normal !important;',
+    '}',
+    'div[data-lexical-editor="true"] p[dir="rtl"],',
+    'div[contenteditable="true"] p[dir="rtl"] {',
+    '  direction: rtl !important;',
+    '  text-align: right !important;',
+    '  unicode-bidi: normal !important;',
+    '}',
+    'div[data-lexical-editor="true"] p[dir="ltr"],',
+    'div[contenteditable="true"] p[dir="ltr"] {',
     '  direction: ltr !important;',
+    '  text-align: left !important;',
+    '  unicode-bidi: normal !important;',
+    '}',
+    'div[data-lexical-editor="true"][dir="rtl"],',
+    'div[contenteditable="true"][dir="rtl"] {',
+    '  direction: rtl !important;',
+    '  text-align: right !important;',
+    '}',
+    'div[data-lexical-editor="true"][dir="ltr"],',
+    'div[contenteditable="true"][dir="ltr"] {',
+    '  direction: ltr !important;',
+    '  text-align: left !important;',
     '}',
 
-    '/* Code blocks and Monaco editor must ALWAYS stay LTR */',
+    /* Code blocks and Monaco editor must ALWAYS stay LTR */
     'pre, code, .code-block, .monaco-editor, [class*="shiki"] {',
     '  direction: ltr !important;',
     '  text-align: left !important;',
     '  unicode-bidi: embed !important;',
     '}',
 
-    '/* Individual Block Elements in AI responses & Chat */',
+    /* Individual Block Elements in AI responses & Chat */
     'p[dir="rtl"], li[dir="rtl"], h1[dir="rtl"], h2[dir="rtl"], h3[dir="rtl"], h4[dir="rtl"], blockquote[dir="rtl"] {',
     '  direction: rtl !important;',
     '  text-align: right !important;',
@@ -40,14 +54,14 @@ const INJECT_CODE = `
     '  text-align: left !important;',
     '}',
 
-    '/* User sent messages and chat steps: true independent line-by-line BiDi */',
+    /* User sent messages and chat steps: true independent line-by-line BiDi */
     '.whitespace-pre-wrap {',
     '  direction: ltr !important;',
     '  text-align: start !important;',
     '  unicode-bidi: plaintext !important;',
     '}',
 
-    '/* Queued message RTL row styling */',
+    /* Queued message RTL row styling */
     '.antigravity-queued-row-rtl {',
     '  direction: rtl !important;',
     '}',
@@ -60,18 +74,18 @@ const INJECT_CODE = `
     '  direction: rtl !important;',
     '}',
 
-    '/* Decorators for RTL queued row */',
+    /* Decorators for RTL queued row */
     '.antigravity-queued-row-rtl [data-testid="queued-decorators"] {',
     '  direction: rtl !important;',
     '  flex-direction: row-reverse !important;',
     '}',
 
-    '/* Flip the send arrow icon horizontally in RTL */',
+    /* Flip the send arrow icon horizontally in RTL */
     '.antigravity-queued-row-rtl [data-testid="queued-decorators"] button[aria-label*="Send now"] svg {',
     '  transform: scaleX(-1) !important;',
     '}',
 
-    '/* Decorators for LTR (English) queued row: Delete - Edit - Send */',
+    /* Decorators for LTR (English) queued row: Delete - Edit - Send */
     '.antigravity-queued-row-ltr {',
     '  direction: ltr !important;',
     '}',
@@ -83,26 +97,45 @@ const INJECT_CODE = `
 
   // Helper: check if text predominantly has Arabic vs Latin
   function getPredominantDir(text) {
-    if (!text) return 'auto';
+    if (!text || !text.trim()) return 'auto';
     const arabicCount = (text.match(/[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]/g) || []).length;
     const latinCount = (text.match(/[A-Za-z]/g) || []).length;
     if (arabicCount === 0 && latinCount === 0) return 'auto';
     return arabicCount >= latinCount ? 'rtl' : 'ltr';
   }
 
-  // 2. Input Handler: clean any forced direction from editor and paragraphs
-  function cleanEditorStyles(editor) {
+  // 2. Input Handler: applies predominant direction per paragraph and on editor
+  function updateEditorParagraphs(editor) {
     if (!editor) return;
-    editor.removeAttribute('dir');
-    editor.style.direction = '';
-    editor.style.textAlign = '';
-
     const paragraphs = editor.querySelectorAll('p');
-    for (let i = 0; i < paragraphs.length; i++) {
-      const p = paragraphs[i];
-      p.removeAttribute('dir');
-      p.style.direction = '';
-      p.style.textAlign = '';
+    let totalArabic = 0;
+    let totalLatin = 0;
+
+    if (paragraphs.length > 0) {
+      for (let i = 0; i < paragraphs.length; i++) {
+        const p = paragraphs[i];
+        const text = p.innerText || p.textContent || '';
+        const aCount = (text.match(/[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]/g) || []).length;
+        const lCount = (text.match(/[A-Za-z]/g) || []).length;
+        totalArabic += aCount;
+        totalLatin += lCount;
+
+        if (aCount === 0 && lCount === 0) {
+          p.setAttribute('dir', 'auto');
+        } else {
+          p.setAttribute('dir', aCount >= lCount ? 'rtl' : 'ltr');
+        }
+      }
+    } else {
+      const text = editor.innerText || editor.textContent || '';
+      totalArabic = (text.match(/[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]/g) || []).length;
+      totalLatin = (text.match(/[A-Za-z]/g) || []).length;
+    }
+
+    if (totalArabic === 0 && totalLatin === 0) {
+      editor.removeAttribute('dir');
+    } else {
+      editor.setAttribute('dir', totalArabic >= totalLatin ? 'rtl' : 'ltr');
     }
   }
 
@@ -111,7 +144,7 @@ const INJECT_CODE = `
     if (!target) return;
     const editor = target.closest ? target.closest('[data-lexical-editor="true"], div[contenteditable="true"]') : null;
     if (editor) {
-      cleanEditorStyles(editor);
+      updateEditorParagraphs(editor);
     } else if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
       const text = target.value || '';
       const dir = getPredominantDir(text);
@@ -144,10 +177,10 @@ const INJECT_CODE = `
   // 3. Scan & align all blocks, user messages, and queued bubbles
   function fixAllArabic() {
     try {
-      // Ensure active input editor paragraphs are clean from any forced dir
+      // Keep active input editor aligned based on predominant characters
       const editors = document.querySelectorAll('[data-lexical-editor="true"]');
       for (let i = 0; i < editors.length; i++) {
-        cleanEditorStyles(editors[i]);
+        updateEditorParagraphs(editors[i]);
       }
 
       // Format individual block elements (paragraphs, list items, headings)
