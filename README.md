@@ -94,7 +94,7 @@
 
 <div align="center">
 
-<a href="https://github.com/Khfaji/antigravity-arabic-suite/releases/download/v1.0.0/Antigravity-Arabic-Setup.bat">
+<a href="https://github.com/Khfaji/antigravity-arabic-suite/releases/latest/download/Antigravity-Arabic-Setup.bat">
   <img src="https://img.shields.io/badge/Download_Installer-Antigravity--Arabic--Setup.bat-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Download Installer" />
 </a>
 
