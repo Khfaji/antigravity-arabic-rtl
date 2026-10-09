@@ -163,16 +163,168 @@ const INJECT_CODE = `
     }
   };
 
-  document.removeEventListener('input', window.__smart_bidi_input_handler, true);
-  document.removeEventListener('keyup', window.__smart_bidi_input_handler, true);
-  document.addEventListener('input', window.__smart_bidi_input_handler, true);
-  document.addEventListener('keyup', window.__smart_bidi_input_handler, true);
-
-  // Clean old keydown listener if present
-  if (window.__antigravity_smart_list_handler) {
-    document.removeEventListener('keydown', window.__antigravity_smart_list_handler, true);
-    window.__antigravity_smart_list_handler = null;
+  // Helper to extract LexicalEditor instance from DOM element
+  function getLexicalEditor(el) {
+    if (!el) return null;
+    const keys = Object.keys(el);
+    const reactKey = keys.find(k => k.startsWith('__reactFiber') || k.startsWith('__reactInternalInstance'));
+    let curr = el[reactKey];
+    while (curr) {
+      if (curr.memoizedProps && curr.memoizedProps.editor) return curr.memoizedProps.editor;
+      if (curr.memoizedProps && curr.memoizedProps.value && curr.memoizedProps.value._editor) return curr.memoizedProps.value._editor;
+      curr = curr.return;
+    }
+    return null;
   }
+
+  // Smart List auto-increment for Lexical Editor on Shift+Enter (or Enter in multi-line)
+  window.__antigravity_smart_list_handler = function(e) {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    const target = e.target;
+    if (!target) return;
+    const editorEl = target.closest ? target.closest('[data-lexical-editor="true"]') : null;
+    if (!editorEl) return;
+
+    // Trigger on Shift+Enter (new line)
+    if (!e.shiftKey) return;
+
+    const lex = getLexicalEditor(editorEl);
+    if (!lex) return;
+
+    let handled = false;
+    try {
+      lex.update(() => {
+        const root = lex._editorState._nodeMap.get('root');
+        if (!root) return;
+        const children = root.getChildren ? root.getChildren() : [];
+        if (children.length === 0) return;
+
+        // Get the active paragraph (by DOM selection or last child)
+        const domSelection = window.getSelection();
+        let targetP = null;
+        if (domSelection && domSelection.anchorNode) {
+          const pEl = domSelection.anchorNode.nodeType === 1 
+            ? domSelection.anchorNode.closest('p') 
+            : domSelection.anchorNode.parentElement ? domSelection.anchorNode.parentElement.closest('p') : null;
+          if (pEl && editorEl.contains(pEl)) {
+            const allPs = Array.from(editorEl.querySelectorAll('p'));
+            const index = allPs.indexOf(pEl);
+            if (index >= 0 && index < children.length) {
+              targetP = children[index];
+            }
+          }
+        }
+        if (!targetP) targetP = children[children.length - 1];
+
+        const text = targetP.getTextContent ? targetP.getTextContent() : '';
+        
+        // Flexible regex for numbers (Western 0-9 & Arabic-Indic ٠-٩ with . or - or ))
+        const numMatch = text.match(/^([\\s\\u200c\\u200d\\u200e\\u200f]*)([0-9\\u0660-\\u0669]+)([\\.\\-\\)])\\s*(.*)$/);
+        const bulletMatch = text.match(/^([\\s\\u200c\\u200d\\u200e\\u200f]*)([-*•])\\s*(.*)$/);
+
+        const ParagraphClass = lex._nodes.get('paragraph').klass;
+        const TextClass = lex._nodes.get('text').klass;
+
+        if (numMatch) {
+          const indent = numMatch[1];
+          const rawNum = numMatch[2];
+          const sep = numMatch[3];
+          const rest = numMatch[4].trim();
+
+          // If current list item is empty (e.g. user pressed Shift+Enter on "2. "), exit list
+          if (rest === '') {
+            targetP.clear();
+            handled = true;
+            return;
+          }
+
+          // Check if it's Arabic-Indic digits
+          const isArabicDigits = /^[\u0660-\u0669]+$/.test(rawNum);
+          const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+          let nextNumStr = '';
+          
+          if (isArabicDigits) {
+            const val = parseInt(rawNum.replace(/[\u0660-\u0669]/g, d => arabicDigits.indexOf(d)), 10) + 1;
+            nextNumStr = String(val).replace(/[0-9]/g, d => arabicDigits[parseInt(d, 10)]);
+          } else {
+            nextNumStr = String(parseInt(rawNum, 10) + 1);
+          }
+
+          const nextP = new ParagraphClass();
+          const nextT = new TextClass(indent + nextNumStr + sep + ' ');
+          nextP.append(nextT);
+          targetP.insertAfter(nextP);
+          nextT.select();
+          handled = true;
+          return;
+        }
+
+        if (bulletMatch) {
+          const indent = bulletMatch[1];
+          const rest = bulletMatch[3].trim();
+
+          // If current bullet is empty, exit list
+          if (rest === '') {
+            targetP.clear();
+            handled = true;
+            return;
+          }
+
+          function normalizeBulletP(pNode) {
+            if (!pNode) return;
+            const pText = pNode.getTextContent ? pNode.getTextContent() : '';
+            const m = pText.match(/^([\\s\\u200c\\u200d\\u200e\\u200f]*)([-*])\\s*(.*)$/);
+            if (!m) return;
+            const pCh = pNode.getChildren ? pNode.getChildren() : [];
+            let done = false;
+            for (let i = 0; i < pCh.length; i++) {
+              const nd = pCh[i];
+              if (nd && nd.getTextContent && nd.spliceText) {
+                const ct = nd.getTextContent();
+                const idx = ct.indexOf(m[2]);
+                if (idx !== -1) {
+                  nd.spliceText(idx, 1, '•');
+                  done = true;
+                  break;
+                }
+              }
+            }
+            if (!done && pCh.length > 0 && pCh[0].setTextContent) {
+              pCh[0].setTextContent(m[1] + '• ' + m[3]);
+              for (let i = 1; i < pCh.length; i++) {
+                if (pCh[i].remove) pCh[i].remove();
+              }
+            }
+          }
+
+          // Normalize current target paragraph
+          normalizeBulletP(targetP);
+
+          // Also scan and normalize any preceding paragraph that has - or *
+          for (let i = 0; i < children.length; i++) {
+            normalizeBulletP(children[i]);
+          }
+
+          const nextP = new ParagraphClass();
+          const nextT = new TextClass(indent + '• ');
+          nextP.append(nextT);
+          targetP.insertAfter(nextP);
+          nextT.select();
+          handled = true;
+          return;
+        }
+      });
+    } catch (err) {}
+
+    if (handled) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    }
+  };
+
+  document.removeEventListener('keydown', window.__antigravity_smart_list_handler, true);
+  document.addEventListener('keydown', window.__antigravity_smart_list_handler, true);
 
   // 3. Scan & align all blocks, user messages, and queued bubbles
   function fixAllArabic() {

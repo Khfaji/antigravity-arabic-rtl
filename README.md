@@ -35,6 +35,11 @@
 
 ## 💎 المميزات الحصرية والذكية
 
+* 📝 **القوائم الذكية والتنقيط التلقائي الأصلي (Lexical Native Smart Lists):**
+  - **الترقيم التلقائي المتسلسل (Smart Auto-Numbering):** يدعم الأرقام الغربية (`1.`, `1-`, `1)`) والأرقام العربية/المشرقية (`١.`, `١-`, `١)`)، حيث ينتقل تلقائياً للرقم التالي عند الضغط على `Enter` أو `Shift+Enter`.
+  - **التنقيط الذكي (Smart Bullet Lists):** يحول تلقائياً الشرطة (`- `) أو النجمة (`* `) في بداية السطر الأول أو أي سطر إلى نقطة (`• `) قياسية وجميلة مع الحفاظ على محاذاة الـ RTL الكاملة.
+  - **الخروج الذكي من القائمة:** الضغط على سطر فارغ في القائمة ينهي الترقيم أو التنقيط فوراً ويعود لسطر عادي دون الحاجة لحذف يدوي.
+  - **تكامل أصلي مع Lexical AST:** تعديل القوائم يتم برمجياً داخل شجرة الـ AST للمحرر، مما يمنع مسح النصوص أو تشوه مؤشر الكتابة (Caret).
 * 🎯 **توجيه ديناميكي للسطور والفقرات (`unicode-bidi: plaintext`):** يتيح كتابة فقرات مشتركة، بحيث يبدأ السطر العربي من اليمين تماماً، والسطر الإنجليزي من أقصى اليسار داخل نفس صندوق الإدخال.
 * ⚖️ **حساب غلبة الحروف (Predominant BiDi Engine):** السطر الذي يحتوي 90% إنجليزي مع كلمة عربية يبقى LTR، بينما السطر ذو الغالبية العربية يتجه لليمين تلقائياً.
 * ⏳ **حل جذري لقائمة الانتظار (Queued Messages):**
@@ -46,7 +51,40 @@
 * 🤖 **قواعد التوجيه المعرفي للذكاء الاصطناعي (`AGENTS.md` / `GEMINI.md`):** حقن تعليمات إلزامية تجبر الوكيل والمودل على صياغة الردود العربية بتغليف RTL صحيح مع عزل الأكواد بمسارات LTR واضحة.
 * 🔄 **إعادة حقن واستجابة فورية بعد التحديثات (Update-Resilient CDP Engine):** ترصد الخدمة في الخلفية تشغيل نوافذ Antigravity فورياً وتقترن بها عبر بروتوكول التشخيص (CDP)، مما يضمن استمرار وتطبيق دعم العربية تلقائياً حتى عند قيام Google بطرح تحديثات واستبدال ملفات التطبيق.
 * 🚀 **إقلاع مزدوج ذكي وشامل (Antigravity & IDE Dual-Launcher Pairing):** يقترن محرك الـ RTL تلقائياً باختصارات تشغيل كلٍّ من **تطبيق Antigravity ومحرر Antigravity IDE** على سطح المكتب وقائمة ابدأ؛ فيعمل الدعم تلقائياً عند فتحك لأيٍّ منهما حتى لو لم تكن الخدمة تعمل عند تسجيل الدخول!
-* 🛡️ **تشغيل هادئ ومستقل مع بدء النظام:** تعمل الخدمة بخفة تامة مع إقلاع الويندوز (Windows Startup) وبدون تعديل ملفات معقد أو أي تأثير على أداء النظام (< 15MB ذاكرة).
+* 🛡️ **استقرار وحصانة فائقة ضد التوقف (Hardened Background Daemon):** معالجة متقدمة لجميع استثناءات الاتصال وقطع الـ WebSocket، مع تشغيل هادئ ومستقل مع بدء النظام (Windows Startup) وبدون أي تأثير على أداء النظام (< 15MB ذاكرة).
+
+---
+
+## 📜 سجل الإصدارات والتغييرات (Changelog & Release History)
+
+### 🌟 الإصدار v1.2.0 (التحديث الأخير)
+* ✨ **إضافة نظام القوائم الذكية (Smart Lists) داخل محرر Lexical:**
+  * **الترقيم التلقائي المتسلسل (Auto-Incrementing Numbering):** دعم الترقيم الذكي بالأرقام الإنجليزية (`1.`, `2.`) والأرقام العربية المشرقية (`١.`, `٢.`) مع استمرار الترقيم تلقائياً عند النزول لسطر جديد.
+  * **التنقيط الذكي (Smart Bullet Formatting):** تحويل الشرطات (`- `) والنجوم (`* `) تلقائياً إلى نقاط تعداد (`• `) في السطر الأول وكافة السطور التالية.
+  * **معالجة شجرة الـ AST لمحرر Lexical:** تنفيذ عمليات استبدال النصوص عبر `spliceText` و `lex.update` لمنع فقدان مؤشر الفأرة وتجنب أي مسح عشوائي للنصوص.
+* 🛠️ **حل مشكلة السطر الأول في القوائم:** فحص شامل وتحديث فوري لجميع فقرات المحرر السابقة والسطر الأول لضمان تحويلها للنقطة فوراً دون الحاجة لترك سطر فارغ.
+* 🛡️ **تعزيز استقرار خدمة الخلفية (Service Hardening):**
+  * إضافة حواجز أمان `uncaughtException` و `unhandledRejection` لمنع إغلاق الخدمة المفاجئ.
+  * حماية قنوات اتصال Chrome DevTools Protocol عند إغلاق النوافذ أو إعادة تشغيلها.
+
+---
+
+### 📦 الإصدار v1.1.0
+* ⚖️ **محرك التحليل الديناميكي لغالبية اللغة (Line-by-Line Predominant BiDi):**
+  * فحص متقدم لنسبة الحروف العربية مقارنة بالحروف اللاتينية لكل سطر وفقرة بشكل مستقل داخل محرر الإدخال والردود.
+  * التبديل التلقائي لاتجاه الفقرة إلى RTL عند كتابة العربية و LTR عند كتابة الأكواد والإنجليزية.
+* 🚀 **نظام الإقلاع المزدوج (Dual-Launcher Integration):**
+  * ربط اختصارات سطح المكتب وقائمة ابدأ لتشغيل الخدمة تلقائياً مع محرر Antigravity IDE وتطبيق Antigravity الرئيسي.
+* 🔄 **التوافق التلقائي مع تحديثات Google Antigravity:** الاعتماد التام على آلية الرصد الديناميكي CDP بدلاً من تعديل الملفات المحمية لمنع ضياع التعريب بعد التحديثات.
+
+---
+
+### 🚀 الإصدار v1.0.0 (الإطلاق الأولي)
+* 🎉 الإطلاق الرسمي لمحرك **Antigravity Arabic Suite**.
+* 🌐 دعم اتجاه اليمين إلى اليسار (RTL) لرسائل الدردشة، والردود، والبطاقات الجانبية.
+* ⏳ دعم رسائل قائمة الانتظار (Queued Messages) وعكس أدوات التحكم وسهم الإرسال.
+* 💻 تثبيت وتفعيل حزمة اللغة والـ RTL في بيئة Antigravity IDE.
+* 🤖 حقن قواعد المساعد الآلي لتوليد الردود بتنسيق RTL سليم مع عزل الأكواد البرمجية.
 
 ---
 
@@ -101,6 +139,7 @@ install.bat
 |                Antigravity Arabic RTL Engine                |
 |  - BiDi Plaintext Rule Engine (Strict Paragraph Isolation)  |
 |  - Predominant Language Detection (Arabic vs Latin Count)   |
+|  - Lexical AST Native Smart Lists (Numbering & Bullets)     |
 |  - Queued Messages Mirrored Controls & Arrow Inversion      |
 |  - MutationObserver + Periodic Micro-Task Sync              |
 +-------------------------------------------------------------+
@@ -137,6 +176,7 @@ install.bat
 ## 🌐 English Summary
 
 **Antigravity Arabic Suite** is a full-fledged bidirectional (BiDi) localization engine engineered specifically for Google Antigravity and Antigravity IDE on Windows:
+* **Smart Auto-Lists & Bullets:** Native Lexical AST manipulation for auto-incrementing numbered lists (both Latin `1.` and Eastern Arabic `١.`) and automatic `- ` / `* ` to `• ` bullet conversion without cursor jumping or text loss.
 * **True Line-by-Line BiDi:** Allows mixed-language paragraphs in Lexical chat input without cross-line text corruption.
 * **Predominant Language Counting:** Calculates character frequency to determine line direction, keeping code and tech terms strictly LTR.
 * **Smart Queued Messages Handling:** Automatically aligns queued cards with mirrored action buttons and flipped send arrows for RTL messages.
