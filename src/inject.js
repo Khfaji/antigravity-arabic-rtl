@@ -692,7 +692,10 @@ const INJECT_CODE = `
 
   function cleanModelLabel(raw) {
     if (!raw) return '';
-    return raw.replace(/\s*\((High|Medium|Low)\)/gi, '').trim();
+    return raw
+      .replace(/\\s*\\((High|Medium|Low)\\)/gi, '')
+      .replace(/\\s*\\(\\s*\\)/g, '')
+      .trim();
   }
 
   function fillPopoverContent(popover) {
