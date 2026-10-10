@@ -145,14 +145,21 @@ async function syncRemoteFiles() {
   } catch (e) {}
 }
 
-try {
-  fs.writeFileSync(path.join(__dirname, 'service.log'), `[${new Date().toISOString()}] Service started and hardened successfully.\n`);
-} catch (e) {}
+// If invoked with --inject-only, run once and exit
+if (process.argv.includes('--inject-only')) {
+  checkAndInjectLive().then(() => {
+    setTimeout(() => process.exit(0), 1200);
+  }).catch(() => process.exit(0));
+} else {
+  try {
+    fs.writeFileSync(path.join(__dirname, 'service.log'), `[${new Date().toISOString()}] Service started and hardened successfully.\n`);
+  } catch (e) {}
 
-// Continuous check every 2 seconds
-setInterval(checkAndInjectLive, 2000);
-checkAndInjectLive();
+  // Continuous check every 2 seconds
+  setInterval(checkAndInjectLive, 2000);
+  checkAndInjectLive();
 
-// Sync remote files every 30 minutes
-setInterval(syncRemoteFiles, 30 * 60 * 1000);
-setTimeout(syncRemoteFiles, 5000);
+  // Sync remote files every 30 minutes
+  setInterval(syncRemoteFiles, 30 * 60 * 1000);
+  setTimeout(syncRemoteFiles, 5000);
+}
