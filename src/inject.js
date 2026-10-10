@@ -1341,8 +1341,18 @@ const INJECT_CODE = `
 
     // Replace action buttons with a Cancel button during operation
     if (actionsRow) {
+      actionsRow.style.display = 'flex';
+      actionsRow.style.justifyContent = 'space-between';
+      actionsRow.style.alignItems = 'center';
       actionsRow.innerHTML = \`
-        <button id="antigravity-modal-abort-btn" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#fca5a5;cursor:pointer;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;transition:background 0.15s ease;">
+        <div style="font-size:12px;opacity:0.75;display:flex;align-items:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+            <path d="M12 2a10 10 0 0 1 10 10"/>
+          </svg>
+          <span>العملية جارية...</span>
+        </div>
+        <button id="antigravity-modal-abort-btn" style="background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.45);color:#fca5a5;cursor:pointer;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:7px;transition:all 0.15s ease;" title="إيقاف التحديث فورياً">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1486,7 +1496,7 @@ const INJECT_CODE = `
       // Step 1: Connecting (Segment 1)
       const t1Start = performance.now();
       updateSegmentUI(1, 40, 'جاري الاتصال بالخادم...', 'فحص جاهزية الخادم وحزم التحديث');
-      await new Promise(r => setTimeout(r, 180));
+      await new Promise(r => setTimeout(r, 450));
       if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
       updateSegmentUI(1, 100, 'تم التحقق من الاتصال', 'الخادم جاهز لنقل الحزمة');
       finishSegmentTiming(1, performance.now() - t1Start);
@@ -1502,6 +1512,9 @@ const INJECT_CODE = `
       if (!res.ok) throw new Error('فشل جلب ملف التحديث من المستودع (' + res.status + ')');
 
       updateSegmentUI(2, 60, 'جاري استلام حزم البيانات...', 'تحميل محتوى الأداة', '35 / ~65 KB');
+      await new Promise(r => setTimeout(r, 400));
+      if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
+
       const rawCode = await res.text();
       const totalKb = (new Blob([rawCode]).size / 1024).toFixed(1);
       updateSegmentUI(2, 100, 'اكتمل التنزيل بنجاح', 'تم استلام كامل الحزمة البرمجية', totalKb + ' / ' + totalKb + ' KB');
@@ -1511,7 +1524,9 @@ const INJECT_CODE = `
       // Step 3: Compiling & Sandbox Extraction (Segment 3)
       const t3Start = performance.now();
       updateSegmentUI(3, 40, 'جاري تجهيز وتثبيت الحزمة...', 'تحليل وتجميع الكود في بيئة الحماية CommonJS');
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 450));
+      if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
+
       const wrapped = '(function() { var module = { exports: {} }; var exports = module.exports; ' + rawCode + '; return module.exports.INJECT_CODE; })()';
       const cleanCode = window.eval(wrapped);
       if (!cleanCode) throw new Error('فشل تجميع ملف الحقن البرمجي');
@@ -1522,7 +1537,7 @@ const INJECT_CODE = `
       // Step 4: Live Injection (Segment 4)
       const t4Start = performance.now();
       updateSegmentUI(4, 50, 'جاري الحقن الفوري المباشر...', 'تنظيف الواجهة السابقة وحقن المحرك الجديد في الذاكرة');
-      await new Promise(r => setTimeout(r, 160));
+      await new Promise(r => setTimeout(r, 350));
       if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
 
       // Clean old UI
