@@ -94,10 +94,10 @@ const INJECT_CODE = `
     '  flex-direction: row-reverse !important;',
     '}',
     '',
-    '/* Update capsule badge animation */',
+    '/* Update capsule badge animation - vibrant pulse */',
     '@keyframes agy-pulse-glow {',
-    '  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); transform: scale(1); }',
-    '  50% { box-shadow: 0 0 0 5px rgba(56, 189, 248, 0); transform: scale(1.02); }',
+    '  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7), 0 2px 10px rgba(2, 132, 199, 0.45); transform: scale(1); }',
+    '  50% { box-shadow: 0 0 0 7px rgba(56, 189, 248, 0), 0 4px 16px rgba(56, 189, 248, 0.55); transform: scale(1.04); }',
     '}'
   ].join('\\n');
 
@@ -691,29 +691,41 @@ const INJECT_CODE = `
       capsule.style.cssText = [
         'display: inline-flex',
         'align-items: center',
-        'gap: 5px',
-        'padding: 3px 9px',
+        'gap: 6px',
+        'padding: 4px 11px',
         'margin-right: 6px',
         'margin-left: 2px',
-        'background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+        'background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%)',
         'color: #ffffff',
-        'border: none',
+        'border: 1px solid rgba(255, 255, 255, 0.25)',
         'border-radius: 9999px',
         'font-family: system-ui, -apple-system, sans-serif',
         'font-size: 11.5px',
         'font-weight: 700',
         'cursor: pointer',
-        'animation: agy-pulse-glow 2.4s infinite ease-in-out',
+        'animation: agy-pulse-glow 2.2s infinite ease-in-out',
         'z-index: 41',
-        'box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35)',
-        'transition: transform 0.15s ease, opacity 0.15s ease',
+        'box-shadow: 0 2px 12px rgba(2, 132, 199, 0.45)',
+        'transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease',
         'user-select: none'
       ].join(';');
 
       capsule.innerHTML = \`
-        <span style="font-size:12px;line-height:1;">🚀</span>
-        <span>تحديث جديد \${availableUpdateInfo.version}</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;flex-shrink:0;">
+          <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+          <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+          <path d="M9 12H4s.55-3.03 2-4.5c1.62-1.63 5-2 5-2"/>
+          <path d="M12 15v5s3.03-.55 4.5-2c1.63-1.62 2-5 2-5"/>
+        </svg>
+        <span style="letter-spacing:0.2px;">تحديث جديد \${availableUpdateInfo.version}</span>
       \`;
+
+      capsule.addEventListener('mouseenter', () => {
+        capsule.style.transform = 'scale(1.05)';
+      });
+      capsule.addEventListener('mouseleave', () => {
+        capsule.style.transform = 'scale(1)';
+      });
 
       capsule.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -743,8 +755,8 @@ const INJECT_CODE = `
     modal.style.cssText = [
       'position: fixed',
       'inset: 0',
-      'background: rgba(0, 0, 0, 0.65)',
-      'backdrop-filter: blur(8px)',
+      'background: rgba(0, 0, 0, 0.7)',
+      'backdrop-filter: blur(10px)',
       'display: flex',
       'align-items: center',
       'justify-content: center',
@@ -755,30 +767,43 @@ const INJECT_CODE = `
     ].join(';');
 
     const changelogItems = (availableUpdateInfo.changelog || [])
-      .map(item => \`<li style="margin-bottom:7px;display:flex;align-items:flex-start;gap:8px;"><span style="color:#38bdf8;font-size:14px;line-height:1.4;">✦</span><span style="font-size:13.5px;line-height:1.5;">\${item}</span></li>\`)
+      .map(item => \`<li style="margin-bottom:8px;display:flex;align-items:flex-start;gap:9px;"><span style="color:#38bdf8;font-size:12px;margin-top:2px;">✦</span><span style="font-size:13.5px;line-height:1.5;">\${item}</span></li>\`)
       .join('');
 
     modal.innerHTML = \`
-      <div style="background:var(--card, #181825);border:1px solid var(--border, rgba(255,255,255,0.15));border-radius:16px;width:440px;max-width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.6);padding:22px;display:flex;flex-direction:column;gap:16px;position:relative;" onclick="event.stopPropagation()">
+      <div style="background:var(--card, #181825);border:1px solid var(--border, rgba(255,255,255,0.15));border-radius:18px;width:450px;max-width:100%;box-shadow:0 24px 60px rgba(0,0,0,0.65);padding:22px;display:flex;flex-direction:column;gap:16px;position:relative;" onclick="event.stopPropagation()">
         
         <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #0284c7, #38bdf8);display:flex;align-items:center;justify-content:center;font-size:18px;">
-              🚀
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg, #0284c7, #38bdf8);display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:0 4px 12px rgba(2, 132, 199, 0.4);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+                <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+              </svg>
             </div>
             <div>
               <div style="font-size:16px;font-weight:700;">يتوفر إصدار جديد!</div>
-              <div style="font-size:12px;opacity:0.7;">\${availableUpdateInfo.name || ('الإصدار ' + availableUpdateInfo.version)}</div>
+              <div style="font-size:12px;opacity:0.75;margin-top:1px;">\${availableUpdateInfo.name || ('الإصدار ' + availableUpdateInfo.version)}</div>
             </div>
           </div>
-          <button id="antigravity-modal-close" style="background:none;border:none;color:currentColor;cursor:pointer;font-size:20px;opacity:0.6;padding:4px 8px;border-radius:6px;line-height:1;">✕</button>
+          <button id="antigravity-modal-close" style="background:none;border:none;color:currentColor;cursor:pointer;font-size:18px;opacity:0.6;padding:5px 8px;border-radius:8px;line-height:1;display:flex;align-items:center;justify-content:center;" title="إغلاق">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
 
         <!-- Changelog Section -->
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <div style="font-size:13px;font-weight:600;opacity:0.85;">✨ ما الجديد في هذا التحديث:</div>
-          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;max-height:180px;overflow-y:auto;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;opacity:0.9;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <span>أبرز التحديثات والمميزات:</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;max-height:190px;overflow-y:auto;">
             <ul style="list-style:none;margin:0;padding:0;">
               \${changelogItems || '<li style="font-size:13px;opacity:0.8;">تحسينات في الأداء وتحديثات عامة.</li>'}
             </ul>
@@ -792,13 +817,17 @@ const INJECT_CODE = `
         </label>
 
         <!-- Actions -->
-        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:4px;">
-          <button id="antigravity-modal-cancel-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:currentColor;cursor:pointer;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:6px;">
+          <button id="antigravity-modal-cancel-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:currentColor;cursor:pointer;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;transition:background 0.15s ease;">
             لاحقاً
           </button>
-          <button id="antigravity-modal-update-now-btn" style="background:linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);border:none;color:#fff;cursor:pointer;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(2, 132, 199, 0.4);">
+          <button id="antigravity-modal-update-now-btn" style="background:linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);border:none;color:#fff;cursor:pointer;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;box-shadow:0 3px 12px rgba(2, 132, 199, 0.45);transition:transform 0.15s ease;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
             <span>تحديث الآن</span>
-            <span>⚡</span>
           </button>
         </div>
 
@@ -836,12 +865,26 @@ const INJECT_CODE = `
     }
   }
 
+  function extractCleanCode(raw) {
+    if (!raw) return '';
+    const startIdx = raw.indexOf('const INJECT_CODE =');
+    if (startIdx !== -1) {
+      const firstTick = raw.indexOf('\`', startIdx);
+      const lastTick = raw.lastIndexOf('\`');
+      if (firstTick !== -1 && lastTick > firstTick) {
+        return raw.substring(firstTick + 1, lastTick);
+      }
+    }
+    return raw;
+  }
+
   async function performLiveHotUpdate(version) {
     try {
       showUpdateToast('⏳ جاري تحميل وتثبيت التحديث الجديد...');
       const res = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/src/inject.js?t=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) throw new Error('فشل جلب ملف التحديث');
-      const code = await res.text();
+      if (!res.ok) throw new Error('فشل جلب ملف التحديث من الخادم');
+      const rawCode = await res.text();
+      const codeToRun = extractCleanCode(rawCode);
 
       // Clean up previous UI artifacts
       removeUpdateCapsule();
@@ -850,8 +893,9 @@ const INJECT_CODE = `
       const widget = document.getElementById('antigravity-model-quota-widget');
       if (widget) widget.remove();
 
-      // Execute code via Function constructor
-      new Function(code)();
+      // Execute code
+      const runFn = new Function(codeToRun);
+      runFn();
 
       showUpdateToast('🎉 تم التحديث بنجاح إلى الإصدار ' + version + '!');
     } catch (err) {
@@ -863,9 +907,10 @@ const INJECT_CODE = `
     try {
       const res = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/src/inject.js?t=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) return;
-      const code = await res.text();
+      const rawCode = await res.text();
+      const codeToRun = extractCleanCode(rawCode);
       removeUpdateCapsule();
-      new Function(code)();
+      new Function(codeToRun)();
       showUpdateToast('⚡ تم تحديث Antigravity Arabic تلقائياً إلى ' + version);
     } catch (e) {}
   }
