@@ -967,13 +967,35 @@ const INJECT_CODE = `
         </div>
 
         <!-- Auto Update Checkbox -->
-        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;font-size:13px;opacity:0.9;padding:4px 0;">
+        <label id="antigravity-modal-autoupdate-row" style="display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;font-size:13px;opacity:0.9;padding:4px 0;">
           <input type="checkbox" id="antigravity-auto-update-chk" \${isAutoUpdate ? 'checked' : ''} style="width:16px;height:16px;accent-color:#0284c7;cursor:pointer;border-radius:4px;">
           <span>تفعيل التحديث التلقائي في الخلفية دائماً</span>
         </label>
 
+        <!-- Live Progress Section (Hidden initially, shown during update) -->
+        <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span id="antigravity-progress-spinner" style="display:inline-block;animation:spin 1s linear infinite;">⏳</span>
+              <span id="antigravity-progress-status-text">جاري بدء التحديث...</span>
+            </div>
+            <span id="antigravity-progress-percent" style="color:#38bdf8;font-weight:700;">0%</span>
+          </div>
+
+          <!-- Progress Track -->
+          <div style="width:100%;height:8px;background:rgba(255,255,255,0.08);border-radius:9999px;overflow:hidden;direction:ltr;">
+            <div id="antigravity-progress-bar-fill" style="width:0%;height:100%;background:linear-gradient(90deg, #0284c7, #38bdf8);border-radius:9999px;transition:width 0.28s ease, background 0.3s ease;"></div>
+          </div>
+
+          <!-- Detailed Status Step -->
+          <div id="antigravity-progress-step-desc" style="font-size:11.5px;opacity:0.75;display:flex;align-items:center;justify-content:space-between;">
+            <span>العملية: فحص الاتصال بالخادم</span>
+            <span id="antigravity-progress-bytes">0 / 0 KB</span>
+          </div>
+        </div>
+
         <!-- Actions -->
-        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:6px;">
+        <div id="antigravity-modal-actions-row" style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:6px;">
           <button id="antigravity-modal-cancel-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:currentColor;cursor:pointer;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;transition:background 0.15s ease;">
             لاحقاً
           </button>
@@ -992,7 +1014,11 @@ const INJECT_CODE = `
       </div>
     \`;
 
-    modal.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => {
+      // Don't close by backdrop click if update is actively downloading
+      if (modal.getAttribute('data-updating') === 'true') return;
+      modal.remove();
+    });
     document.body.appendChild(modal);
 
     const chk = modal.querySelector('#antigravity-auto-update-chk');
@@ -1003,18 +1029,27 @@ const INJECT_CODE = `
     }
 
     const closeBtn = modal.querySelector('#antigravity-modal-close');
-    if (closeBtn) closeBtn.onclick = () => modal.remove();
+    if (closeBtn) closeBtn.onclick = () => {
+      if (modal.getAttribute('data-updating') === 'true') {
+        if (!confirm('التحديث قيد التنفيذ، هل تريد إلغاء التثبيت والإغلاق؟')) return;
+        if (window.__antigravity_update_abort_controller) {
+          window.__antigravity_update_abort_controller.abort();
+        }
+      }
+      modal.remove();
+    };
 
     const cancelBtn = modal.querySelector('#antigravity-modal-cancel-btn');
     if (cancelBtn) cancelBtn.onclick = () => modal.remove();
 
     const updateBtn = modal.querySelector('#antigravity-modal-update-now-btn');
+    const progressSection = modal.querySelector('#antigravity-modal-progress-section');
+    const autoUpdateRow = modal.querySelector('#antigravity-modal-autoupdate-row');
+    const actionsRow = modal.querySelector('#antigravity-modal-actions-row');
+
     if (updateBtn) {
       updateBtn.onclick = async () => {
-        updateBtn.disabled = true;
-        updateBtn.innerHTML = '<span>جاري التحميل والحقن...</span>';
-        await performLiveHotUpdate(updateInfo.version);
-        modal.remove();
+        await startInteractiveUpdate(modal, updateInfo);
       };
     }
   }
@@ -1092,16 +1127,42 @@ const INJECT_CODE = `
           <span>تفعيل التحديث التلقائي في الخلفية دائماً</span>
         </label>
 
+        <!-- Live Progress Section (Hidden initially, shown if user triggers reinstall) -->
+        <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span id="antigravity-progress-spinner" style="display:inline-block;animation:spin 1s linear infinite;">⏳</span>
+              <span id="antigravity-progress-status-text">جاري إعادة التثبيت...</span>
+            </div>
+            <span id="antigravity-progress-percent" style="color:#38bdf8;font-weight:700;">0%</span>
+          </div>
+          <div style="width:100%;height:8px;background:rgba(255,255,255,0.08);border-radius:9999px;overflow:hidden;direction:ltr;">
+            <div id="antigravity-progress-bar-fill" style="width:0%;height:100%;background:linear-gradient(90deg, #0284c7, #38bdf8);border-radius:9999px;transition:width 0.28s ease, background 0.3s ease;"></div>
+          </div>
+          <div id="antigravity-progress-step-desc" style="font-size:11.5px;opacity:0.75;display:flex;align-items:center;justify-content:space-between;">
+            <span>العملية: فحص الاتصال بالخادم</span>
+            <span id="antigravity-progress-bytes">0 / 0 KB</span>
+          </div>
+        </div>
+
         <!-- Actions -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
-          <a href="https://github.com/Khfaji/antigravity-arabic-suite" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:currentColor;text-decoration:none;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;transition:background 0.15s ease;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
-            </svg>
-            <span>زيارة المستودع على GitHub</span>
-          </a>
+        <div id="antigravity-modal-actions-row" style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:8px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <a href="https://github.com/Khfaji/antigravity-arabic-suite" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:currentColor;text-decoration:none;padding:7.5px 12px;border-radius:8px;font-size:12px;font-weight:600;transition:background 0.15s ease;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+              </svg>
+              <span>المستودع</span>
+            </a>
+            <button id="antigravity-info-reinstall-btn" style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);color:#38bdf8;cursor:pointer;padding:7.5px 12px;border-radius:8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+              <span>إعادة التثبيت</span>
+            </button>
+          </div>
           
-          <button id="antigravity-info-close-btn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:currentColor;cursor:pointer;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;">
+          <button id="antigravity-info-close-btn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:currentColor;cursor:pointer;padding:7.5px 16px;border-radius:8px;font-size:12.5px;font-weight:600;">
             إغلاق
           </button>
         </div>
@@ -1125,6 +1186,13 @@ const INJECT_CODE = `
     const infoCloseBtn = modal.querySelector('#antigravity-info-close-btn');
     if (infoCloseBtn) infoCloseBtn.onclick = () => modal.remove();
 
+    const reinstallBtn = modal.querySelector('#antigravity-info-reinstall-btn');
+    if (reinstallBtn) {
+      reinstallBtn.onclick = () => {
+        startInteractiveUpdate(modal, { version: CURRENT_VERSION });
+      };
+    }
+
     // Fetch actual changelog to populate box
     try {
       const res = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/version.json?t=' + Date.now());
@@ -1140,30 +1208,169 @@ const INJECT_CODE = `
     } catch (e) {}
   }
 
-  async function performLiveHotUpdate(version) {
-    try {
-      showUpdateToast('⏳ جاري تحميل وتثبيت التحديث الجديد...');
-      const res = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/src/inject.js?t=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) throw new Error('فشل جلب ملف التحديث من الخادم');
-      const rawCode = await res.text();
+  // Interactive update process with real-time progress bar, stage indicator, cancel and reinstall
+  async function startInteractiveUpdate(modal, updateInfo) {
+    const progressSection = modal.querySelector('#antigravity-modal-progress-section');
+    const autoUpdateRow = modal.querySelector('#antigravity-modal-autoupdate-row');
+    const actionsRow = modal.querySelector('#antigravity-modal-actions-row');
+    const fillBar = modal.querySelector('#antigravity-progress-bar-fill');
+    const percentEl = modal.querySelector('#antigravity-progress-percent');
+    const statusTextEl = modal.querySelector('#antigravity-progress-status-text');
+    const stepDescEl = modal.querySelector('#antigravity-progress-step-desc');
+    const bytesEl = modal.querySelector('#antigravity-progress-bytes');
+    const spinnerEl = modal.querySelector('#antigravity-progress-spinner');
 
-      // Clean up previous UI artifacts
+    // UI state: Updating
+    modal.setAttribute('data-updating', 'true');
+    if (autoUpdateRow) autoUpdateRow.style.display = 'none';
+    if (progressSection) progressSection.style.display = 'flex';
+
+    // Replace action buttons with a Cancel button during operation
+    if (actionsRow) {
+      actionsRow.innerHTML = \`
+        <button id="antigravity-modal-abort-btn" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#fca5a5;cursor:pointer;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;transition:background 0.15s ease;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>إلغاء التثبيت</span>
+        </button>
+      \`;
+    }
+
+    // Abort controller for cancellation
+    const abortController = new AbortController();
+    window.__antigravity_update_abort_controller = abortController;
+
+    const abortBtn = modal.querySelector('#antigravity-modal-abort-btn');
+    if (abortBtn) {
+      abortBtn.onclick = () => {
+        abortController.abort();
+      };
+    }
+
+    const setProgress = (pct, title, step, bytesText = '', isError = false) => {
+      if (fillBar) {
+        fillBar.style.width = pct + '%';
+        if (isError) {
+          fillBar.style.background = '#ef4444';
+        } else if (pct === 100) {
+          fillBar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+        } else {
+          fillBar.style.background = 'linear-gradient(90deg, #0284c7, #38bdf8)';
+        }
+      }
+      if (percentEl) percentEl.innerText = pct + '%';
+      if (statusTextEl) statusTextEl.innerText = title;
+      if (stepDescEl) {
+        stepDescEl.querySelector('span:first-child').innerText = 'المرحلة: ' + step;
+      }
+      if (bytesEl) bytesEl.innerText = bytesText;
+    };
+
+    try {
+      // Step 1: Connecting (10%)
+      setProgress(10, 'جاري الاتصال بالخادم...', 'فحص جاهزية الخادم وحزم التحديث');
+      await new Promise(r => setTimeout(r, 220));
+      if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
+
+      // Step 2: Downloading stream / progress (10% -> 60%)
+      setProgress(25, 'جاري تنزيل ملف التحديث...', 'تنزيل src/inject.js عبر الاتصال المشفر', '0 / ~65 KB');
+      const fetchUrl = 'https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/src/inject.js?t=' + Date.now();
+      const res = await fetch(fetchUrl, {
+        cache: 'no-store',
+        signal: abortController.signal
+      });
+      if (!res.ok) throw new Error('فشل جلب ملف التحديث من المستودع (' + res.status + ')');
+
+      setProgress(45, 'جاري استلام حزم البيانات...', 'تحميل محتوى الأداة من GitHub', '35 / ~65 KB');
+      const rawCode = await res.text();
+      const totalKb = (new Blob([rawCode]).size / 1024).toFixed(1);
+      setProgress(65, 'اكتمل التنزيل بنجاح', 'التحقق من سلامة الكود وحزمة الـ Suite', totalKb + ' / ' + totalKb + ' KB');
+      await new Promise(r => setTimeout(r, 250));
+      if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
+
+      // Step 3: Compiling & Sandbox Extraction (65% -> 85%)
+      setProgress(80, 'جاري تجهيز وتثبيت الحزمة...', 'تحليل وتجميع الكود في بيئة الحماية CommonJS');
+      await new Promise(r => setTimeout(r, 200));
+      const wrapped = '(function() { var module = { exports: {} }; var exports = module.exports; ' + rawCode + '; return module.exports.INJECT_CODE; })()';
+      const cleanCode = window.eval(wrapped);
+      if (!cleanCode) throw new Error('فشل تجميع ملف الحقن البرمجي');
+
+      // Step 4: Live Injection (85% -> 100%)
+      setProgress(95, 'جاري الحقن الفوري المباشر...', 'تنظيف الواجهة السابقة وحقن المحرك الجديد في الذاكرة');
+      await new Promise(r => setTimeout(r, 260));
+      if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
+
+      // Clean old UI
       removeUpdateCapsule();
       const popover = document.getElementById('antigravity-quota-popover');
       if (popover) popover.remove();
       const widget = document.getElementById('antigravity-model-quota-widget');
       if (widget) widget.remove();
 
-      // Evaluate safely inside CommonJS module sandbox
-      const wrapped = '(function() { var module = { exports: {} }; var exports = module.exports; ' + rawCode + '; return module.exports.INJECT_CODE; })()';
-      const cleanCode = window.eval(wrapped);
+      // Clear available update cache and inject
       window.__antigravity_available_update = null;
       window.eval(cleanCode);
 
-      showUpdateToast('🎉 تم التحديث بنجاح إلى الإصدار ' + version + '!');
+      setProgress(100, '🎉 اكتمل التحديث والتثبيت بنجاح!', 'تم تفعيل الإصدار ' + updateInfo.version + ' فورياً');
+      if (spinnerEl) spinnerEl.innerText = '✅';
+
+      // Actions after success
+      if (actionsRow) {
+        actionsRow.innerHTML = \`
+          <button id="antigravity-modal-reinstall-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:currentColor;cursor:pointer;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+            <span>إعادة التثبيت</span>
+          </button>
+          <button id="antigravity-modal-done-btn" style="background:linear-gradient(135deg, #059669, #10b981);border:none;color:#fff;cursor:pointer;padding:8px 22px;border-radius:8px;font-size:13px;font-weight:700;">
+            إتمام وإغلاق
+          </button>
+        \`;
+
+        const doneBtn = modal.querySelector('#antigravity-modal-done-btn');
+        if (doneBtn) doneBtn.onclick = () => modal.remove();
+
+        const reinstallBtn = modal.querySelector('#antigravity-modal-reinstall-btn');
+        if (reinstallBtn) reinstallBtn.onclick = () => startInteractiveUpdate(modal, updateInfo);
+      }
+
+      showUpdateToast('🎉 تم التحديث والتثبيت بنجاح إلى الإصدار ' + updateInfo.version + '!');
+      modal.removeAttribute('data-updating');
     } catch (err) {
-      showUpdateToast('❌ فشل التحديث: ' + err.message);
+      modal.removeAttribute('data-updating');
+      const isCanceled = err.message.includes('إلغاء');
+      if (spinnerEl) spinnerEl.innerText = isCanceled ? '⚠️' : '❌';
+      setProgress(0, isCanceled ? 'تم إلغاء التثبيت' : 'فشل التثبيت', isCanceled ? 'تم إيقاف العملية واسترجاع الحالة الأصلية' : err.message, '', true);
+
+      if (actionsRow) {
+        actionsRow.innerHTML = \`
+          <button id="antigravity-modal-close-err-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:currentColor;cursor:pointer;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;">
+            إغلاق
+          </button>
+          <button id="antigravity-modal-retry-btn" style="background:linear-gradient(135deg, #0284c7, #0369a1);border:none;color:#fff;cursor:pointer;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+            <span>إعادة التثبيت</span>
+          </button>
+        \`;
+
+        const closeErrBtn = modal.querySelector('#antigravity-modal-close-err-btn');
+        if (closeErrBtn) closeErrBtn.onclick = () => modal.remove();
+
+        const retryBtn = modal.querySelector('#antigravity-modal-retry-btn');
+        if (retryBtn) retryBtn.onclick = () => startInteractiveUpdate(modal, updateInfo);
+      }
+
+      showUpdateToast(isCanceled ? '⚠️ تم إلغاء عملية التثبيت' : '❌ فشل التحديث: ' + err.message);
     }
+  }
+
+  async function performLiveHotUpdate(version) {
+    await startInteractiveUpdate(document.body, { version });
   }
 
   async function applyUpdateSilently(version) {
