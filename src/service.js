@@ -90,6 +90,36 @@ async function checkAndInjectLive() {
   }
 }
 
+// Check remote update and keep local files up to date every 30 minutes
+async function syncRemoteFiles() {
+  try {
+    const vRes = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/version.json?t=' + Date.now()).catch(() => null);
+    if (!vRes || !vRes.ok) return;
+    const vData = await vRes.json().catch(() => null);
+    if (!vData || !vData.version) return;
+
+    const localVersionPath = path.join(__dirname, '..', 'version.json');
+    let localVersion = '1.0.0';
+    if (fs.existsSync(localVersionPath)) {
+      try {
+        localVersion = JSON.parse(fs.readFileSync(localVersionPath, 'utf8')).version || localVersion;
+      } catch (e) {}
+    }
+
+    if (vData.version !== localVersion) {
+      const codeRes = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/src/inject.js?t=' + Date.now()).catch(() => null);
+      if (codeRes && codeRes.ok) {
+        const newCode = await codeRes.text();
+        fs.writeFileSync(path.join(__dirname, 'inject.js'), newCode, 'utf8');
+        fs.writeFileSync(localVersionPath, JSON.stringify(vData, null, 2), 'utf8');
+        // Force reinjection to all connected pages
+        injectedPageIds.clear();
+        checkAndInjectLive();
+      }
+    }
+  } catch (e) {}
+}
+
 try {
   fs.writeFileSync(path.join(__dirname, 'service.log'), `[${new Date().toISOString()}] Service started and hardened successfully.\n`);
 } catch (e) {}
@@ -97,3 +127,7 @@ try {
 // Continuous check every 2 seconds
 setInterval(checkAndInjectLive, 2000);
 checkAndInjectLive();
+
+// Sync remote files every 30 minutes
+setInterval(syncRemoteFiles, 30 * 60 * 1000);
+setTimeout(syncRemoteFiles, 5000);

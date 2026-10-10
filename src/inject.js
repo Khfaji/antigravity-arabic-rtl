@@ -92,6 +92,12 @@ const INJECT_CODE = `
     '.antigravity-queued-row-ltr [data-testid="queued-decorators"] {',
     '  direction: ltr !important;',
     '  flex-direction: row-reverse !important;',
+    '}',
+    '',
+    '/* Update capsule badge animation */',
+    '@keyframes agy-pulse-glow {',
+    '  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); transform: scale(1); }',
+    '  50% { box-shadow: 0 0 0 5px rgba(56, 189, 248, 0); transform: scale(1.02); }',
     '}'
   ].join('\\n');
 
@@ -607,12 +613,298 @@ const INJECT_CODE = `
         \`;
       }
 
+      // Check and render update capsule next to widget if an update is available
+      renderUpdateCapsule(widget);
+
       // Update open popover content if visible
       const popover = document.getElementById('antigravity-quota-popover');
       if (popover && popover.style.display !== 'none') {
         fillPopoverContent(popover);
       }
     } catch (e) {}
+  }
+
+  // --- Update Notification & Self-Updater System ---
+  const CURRENT_VERSION = '1.3.0';
+  let availableUpdateInfo = null;
+
+  async function checkForUpdates() {
+    try {
+      const res = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/version.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data || !data.version) return;
+
+      if (isNewerVersion(data.version, CURRENT_VERSION)) {
+        availableUpdateInfo = data;
+        
+        // Auto-update if user enabled it previously
+        const isAuto = localStorage.getItem('__antigravity_auto_update') === 'true';
+        if (isAuto) {
+          applyUpdateSilently(data.version);
+          return;
+        }
+
+        const widget = document.getElementById('antigravity-model-quota-widget');
+        if (widget) {
+          renderUpdateCapsule(widget);
+        }
+      } else {
+        availableUpdateInfo = null;
+        removeUpdateCapsule();
+      }
+    } catch (e) {}
+  }
+
+  function isNewerVersion(remote, local) {
+    try {
+      const r = remote.replace(/^v/, '').split('.').map(Number);
+      const l = local.replace(/^v/, '').split('.').map(Number);
+      for (let i = 0; i < Math.max(r.length, l.length); i++) {
+        const rv = r[i] || 0;
+        const lv = l[i] || 0;
+        if (rv > lv) return true;
+        if (rv < lv) return false;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function removeUpdateCapsule() {
+    const existing = document.getElementById('antigravity-update-capsule');
+    if (existing) existing.remove();
+  }
+
+  function renderUpdateCapsule(widget) {
+    if (!availableUpdateInfo) {
+      removeUpdateCapsule();
+      return;
+    }
+
+    let capsule = document.getElementById('antigravity-update-capsule');
+    if (!capsule) {
+      capsule = document.createElement('button');
+      capsule.id = 'antigravity-update-capsule';
+      capsule.type = 'button';
+      capsule.style.cssText = [
+        'display: inline-flex',
+        'align-items: center',
+        'gap: 5px',
+        'padding: 3px 9px',
+        'margin-right: 6px',
+        'margin-left: 2px',
+        'background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+        'color: #ffffff',
+        'border: none',
+        'border-radius: 9999px',
+        'font-family: system-ui, -apple-system, sans-serif',
+        'font-size: 11.5px',
+        'font-weight: 700',
+        'cursor: pointer',
+        'animation: agy-pulse-glow 2.4s infinite ease-in-out',
+        'z-index: 41',
+        'box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35)',
+        'transition: transform 0.15s ease, opacity 0.15s ease',
+        'user-select: none'
+      ].join(';');
+
+      capsule.innerHTML = \`
+        <span style="font-size:12px;line-height:1;">🚀</span>
+        <span>تحديث جديد \${availableUpdateInfo.version}</span>
+      \`;
+
+      capsule.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openUpdateModal();
+      });
+    }
+
+    // Insert directly adjacent to the quota widget
+    if (widget && widget.parentElement) {
+      if (capsule.parentElement !== widget.parentElement || widget.previousElementSibling !== capsule) {
+        widget.parentElement.insertBefore(capsule, widget);
+      }
+    }
+  }
+
+  function openUpdateModal() {
+    if (!availableUpdateInfo) return;
+
+    let modal = document.getElementById('antigravity-update-modal');
+    if (modal) modal.remove();
+
+    const isAutoUpdate = localStorage.getItem('__antigravity_auto_update') === 'true';
+
+    modal = document.createElement('div');
+    modal.id = 'antigravity-update-modal';
+    modal.setAttribute('dir', 'rtl');
+    modal.style.cssText = [
+      'position: fixed',
+      'inset: 0',
+      'background: rgba(0, 0, 0, 0.65)',
+      'backdrop-filter: blur(8px)',
+      'display: flex',
+      'align-items: center',
+      'justify-content: center',
+      'z-index: 100000',
+      'font-family: system-ui, -apple-system, sans-serif',
+      'padding: 20px',
+      'color: var(--foreground, #e2e8f0)'
+    ].join(';');
+
+    const changelogItems = (availableUpdateInfo.changelog || [])
+      .map(item => \`<li style="margin-bottom:7px;display:flex;align-items:flex-start;gap:8px;"><span style="color:#38bdf8;font-size:14px;line-height:1.4;">✦</span><span style="font-size:13.5px;line-height:1.5;">\${item}</span></li>\`)
+      .join('');
+
+    modal.innerHTML = \`
+      <div style="background:var(--card, #181825);border:1px solid var(--border, rgba(255,255,255,0.15));border-radius:16px;width:440px;max-width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.6);padding:22px;display:flex;flex-direction:column;gap:16px;position:relative;" onclick="event.stopPropagation()">
+        
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #0284c7, #38bdf8);display:flex;align-items:center;justify-content:center;font-size:18px;">
+              🚀
+            </div>
+            <div>
+              <div style="font-size:16px;font-weight:700;">يتوفر إصدار جديد!</div>
+              <div style="font-size:12px;opacity:0.7;">\${availableUpdateInfo.name || ('الإصدار ' + availableUpdateInfo.version)}</div>
+            </div>
+          </div>
+          <button id="antigravity-modal-close" style="background:none;border:none;color:currentColor;cursor:pointer;font-size:20px;opacity:0.6;padding:4px 8px;border-radius:6px;line-height:1;">✕</button>
+        </div>
+
+        <!-- Changelog Section -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:13px;font-weight:600;opacity:0.85;">✨ ما الجديد في هذا التحديث:</div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;max-height:180px;overflow-y:auto;">
+            <ul style="list-style:none;margin:0;padding:0;">
+              \${changelogItems || '<li style="font-size:13px;opacity:0.8;">تحسينات في الأداء وتحديثات عامة.</li>'}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Auto Update Checkbox -->
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;font-size:13px;opacity:0.9;padding:4px 0;">
+          <input type="checkbox" id="antigravity-auto-update-chk" \${isAutoUpdate ? 'checked' : ''} style="width:16px;height:16px;accent-color:#0284c7;cursor:pointer;border-radius:4px;">
+          <span>تفعيل التحديث التلقائي في الخلفية دائماً</span>
+        </label>
+
+        <!-- Actions -->
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:4px;">
+          <button id="antigravity-modal-cancel-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:currentColor;cursor:pointer;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;">
+            لاحقاً
+          </button>
+          <button id="antigravity-modal-update-now-btn" style="background:linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);border:none;color:#fff;cursor:pointer;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(2, 132, 199, 0.4);">
+            <span>تحديث الآن</span>
+            <span>⚡</span>
+          </button>
+        </div>
+
+      </div>
+    \`;
+
+    modal.addEventListener('click', () => {
+      modal.remove();
+    });
+
+    document.body.appendChild(modal);
+
+    // Event listeners
+    const chk = modal.querySelector('#antigravity-auto-update-chk');
+    if (chk) {
+      chk.addEventListener('change', () => {
+        localStorage.setItem('__antigravity_auto_update', chk.checked ? 'true' : 'false');
+      });
+    }
+
+    const closeBtn = modal.querySelector('#antigravity-modal-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => modal.remove());
+
+    const cancelBtn = modal.querySelector('#antigravity-modal-cancel-btn');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => modal.remove());
+
+    const updateBtn = modal.querySelector('#antigravity-modal-update-now-btn');
+    if (updateBtn) {
+      updateBtn.addEventListener('click', async () => {
+        updateBtn.disabled = true;
+        updateBtn.innerHTML = '<span>جاري التحميل والحقن...</span>';
+        await performLiveHotUpdate(availableUpdateInfo.version);
+        modal.remove();
+      });
+    }
+  }
+
+  async function performLiveHotUpdate(version) {
+    try {
+      showUpdateToast('⏳ جاري تحميل وتثبيت التحديث الجديد...');
+      const res = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/src/inject.js?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('فشل جلب ملف التحديث');
+      const code = await res.text();
+
+      // Clean up previous UI artifacts
+      removeUpdateCapsule();
+      const popover = document.getElementById('antigravity-quota-popover');
+      if (popover) popover.remove();
+      const widget = document.getElementById('antigravity-model-quota-widget');
+      if (widget) widget.remove();
+
+      // Execute code via Function constructor
+      new Function(code)();
+
+      showUpdateToast('🎉 تم التحديث بنجاح إلى الإصدار ' + version + '!');
+    } catch (err) {
+      showUpdateToast('❌ فشل التحديث: ' + err.message);
+    }
+  }
+
+  async function applyUpdateSilently(version) {
+    try {
+      const res = await fetch('https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/src/inject.js?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const code = await res.text();
+      removeUpdateCapsule();
+      new Function(code)();
+      showUpdateToast('⚡ تم تحديث Antigravity Arabic تلقائياً إلى ' + version);
+    } catch (e) {}
+  }
+
+  function showUpdateToast(msg) {
+    let toast = document.getElementById('antigravity-update-toast');
+    if (toast) toast.remove();
+
+    toast = document.createElement('div');
+    toast.id = 'antigravity-update-toast';
+    toast.setAttribute('dir', 'rtl');
+    toast.style.cssText = [
+      'position: fixed',
+      'bottom: 24px',
+      'left: 50%',
+      'transform: translateX(-50%)',
+      'background: var(--card, #1e1e2e)',
+      'color: #ffffff',
+      'border: 1px solid rgba(56, 189, 248, 0.4)',
+      'box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5)',
+      'border-radius: 9999px',
+      'padding: 10px 22px',
+      'font-size: 13.5px',
+      'font-weight: 600',
+      'z-index: 100001',
+      'display: flex',
+      'align-items: center',
+      'gap: 8px',
+      'transition: opacity 0.3s ease',
+      'pointer-events: none'
+    ].join(';');
+
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
   }
 
   let popoverHideTimer = null;
@@ -863,11 +1155,17 @@ const INJECT_CODE = `
     window.__antigravity_rtl_observer.disconnect();
   }
   window.__antigravity_rtl_observer = new MutationObserver(function(mutations) {
-    // Ignore mutations caused by our own quota widget/popover to avoid loops
+    // Ignore mutations caused by our own quota widget/popover/update elements to avoid loops
     let onlyWidget = true;
     for (let i = 0; i < mutations.length; i++) {
       const target = mutations[i].target;
-      if (!target || !target.closest || (!target.closest('#antigravity-model-quota-widget') && !target.closest('#antigravity-quota-popover'))) {
+      if (!target || !target.closest || (
+        !target.closest('#antigravity-model-quota-widget') && 
+        !target.closest('#antigravity-quota-popover') &&
+        !target.closest('#antigravity-update-capsule') &&
+        !target.closest('#antigravity-update-modal') &&
+        !target.closest('#antigravity-update-toast')
+      )) {
         onlyWidget = false;
         break;
       }
@@ -899,6 +1197,17 @@ const INJECT_CODE = `
   setTimeout(() => {
     try { updateModelQuotaWidget(); } catch (e) {}
   }, 500);
+
+  // 7. Periodic Update Checker (Checks on startup after 2s, then every 10 minutes)
+  if (window.__antigravity_update_interval) {
+    clearInterval(window.__antigravity_update_interval);
+  }
+  window.__antigravity_update_interval = setInterval(() => {
+    try { checkForUpdates(); } catch (e) {}
+  }, 10 * 60 * 1000);
+  setTimeout(() => {
+    try { checkForUpdates(); } catch (e) {}
+  }, 2000);
 
   return 'SUCCESS';
 })();
