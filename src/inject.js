@@ -1182,21 +1182,20 @@ const INJECT_CODE = `
           <span>تفعيل التحديث التلقائي في الخلفية دائماً</span>
         </label>
 
-        <!-- Live Progress Section (Hidden initially, shown if user triggers reinstall) -->
-        <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+        <!-- Permanent Cloudflare-style Multi-Segment Pipeline Overview (Always Visible) -->
+        <div id="antigravity-modal-progress-section" style="display:flex;flex-direction:column;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <span id="antigravity-progress-spinner" style="display:inline-flex;align-items:center;justify-content:center;color:#38bdf8;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;">
-                  <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
-                  <path d="M12 2a10 10 0 0 1 10 10"/>
+              <span id="antigravity-progress-spinner" style="display:inline-flex;align-items:center;justify-content:center;color:#10b981;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </span>
-              <span id="antigravity-progress-status-text">جاري إعادة التثبيت...</span>
+              <span id="antigravity-progress-status-text">حالة مسار التثبيت: مثبت ونشط بالكامل</span>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <span id="antigravity-progress-total-time" style="font-size:11.5px;opacity:0.65;font-family:monospace;"></span>
-              <span id="antigravity-progress-percent" style="color:#38bdf8;font-weight:700;">0%</span>
+              <span id="antigravity-progress-total-time" style="font-size:11.5px;opacity:0.75;font-family:monospace;color:#38bdf8;">حالة التشغيل: 100%</span>
+              <span id="antigravity-progress-percent" style="color:#10b981;font-weight:700;">100%</span>
             </div>
           </div>
 
@@ -1204,58 +1203,58 @@ const INJECT_CODE = `
           <div id="antigravity-segmented-track" style="width:100%;height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;display:flex;gap:2px;padding:1px;box-sizing:border-box;direction:rtl;">
             <!-- Segment 1: Connecting -->
             <div id="antigravity-seg-1" style="flex:1;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الاتصال بالخادم">
-              <div class="seg-fill" style="width:0%;height:100%;background:#38bdf8;transition:width 0.25s ease;"></div>
+              <div class="seg-fill" style="width:100%;height:100%;background:#38bdf8;transition:width 0.25s ease;"></div>
             </div>
             <!-- Segment 2: Downloading -->
-            <div id="antigravity-seg-2" style="flex:2;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="تنزيل الملفات">
-              <div class="seg-fill" style="width:0%;height:100%;background:#818cf8;transition:width 0.25s ease;"></div>
+            <div id="antigravity-seg-2" style="flex:1.4;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="تنزيل الملفات">
+              <div class="seg-fill" style="width:100%;height:100%;background:#818cf8;transition:width 0.25s ease;"></div>
             </div>
             <!-- Segment 3: Compiling & Sandbox -->
             <div id="antigravity-seg-3" style="flex:1.2;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="تجهيز الحزمة">
-              <div class="seg-fill" style="width:0%;height:100%;background:#c084fc;transition:width 0.25s ease;"></div>
+              <div class="seg-fill" style="width:100%;height:100%;background:#c084fc;transition:width 0.25s ease;"></div>
             </div>
             <!-- Segment 4: Live Injection -->
-            <div id="antigravity-seg-4" style="flex:1;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الحقن الفوري المباشر">
-              <div class="seg-fill" style="width:0%;height:100%;background:#34d399;transition:width 0.25s ease;"></div>
+            <div id="antigravity-seg-4" style="flex:1.2;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الحقن الفوري المباشر">
+              <div class="seg-fill" style="width:100%;height:100%;background:#34d399;transition:width 0.25s ease;"></div>
             </div>
           </div>
 
           <!-- Segments Timing & Stage Breakdown (Cloudflare Deployment Style) -->
           <div id="antigravity-segments-legend" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;direction:rtl;margin-top:2px;">
-            <div id="antigravity-legend-1" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+            <div id="antigravity-legend-1" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);transition:all 0.25s ease;">
               <div style="display:flex;align-items:center;gap:4px;">
                 <span style="width:6px;height:6px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></span>
                 <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">الاتصال</span>
               </div>
-              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">جاهز</span>
             </div>
-            <div id="antigravity-legend-2" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+            <div id="antigravity-legend-2" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);transition:all 0.25s ease;">
               <div style="display:flex;align-items:center;gap:4px;">
                 <span style="width:6px;height:6px;border-radius:50%;background:#818cf8;flex-shrink:0;"></span>
                 <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">التنزيل</span>
               </div>
-              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">محمّل</span>
             </div>
-            <div id="antigravity-legend-3" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+            <div id="antigravity-legend-3" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);transition:all 0.25s ease;">
               <div style="display:flex;align-items:center;gap:4px;">
                 <span style="width:6px;height:6px;border-radius:50%;background:#c084fc;flex-shrink:0;"></span>
                 <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">التثبيت</span>
               </div>
-              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">مبني</span>
             </div>
-            <div id="antigravity-legend-4" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+            <div id="antigravity-legend-4" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);transition:all 0.25s ease;">
               <div style="display:flex;align-items:center;gap:4px;">
                 <span style="width:6px;height:6px;border-radius:50%;background:#34d399;flex-shrink:0;"></span>
                 <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">الحقن</span>
               </div>
-              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+              <span class="legend-time" style="color:#34d399;font-family:monospace;font-size:10px;">محقون</span>
             </div>
           </div>
 
           <!-- Detailed Status Step -->
           <div id="antigravity-progress-step-desc" style="font-size:11.5px;opacity:0.8;display:flex;align-items:center;justify-content:space-between;padding-top:2px;">
-            <span>العملية: فحص الاتصال بالخادم</span>
-            <span id="antigravity-progress-bytes">0 / 0 KB</span>
+            <span>العملية: الحزمة محقونة ونشطة في الذاكرة</span>
+            <span id="antigravity-progress-bytes">v\${CURRENT_VERSION}</span>
           </div>
         </div>
 
@@ -1273,6 +1272,13 @@ const INJECT_CODE = `
                 <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
               </svg>
               <span>إعادة التثبيت</span>
+            </button>
+            <button id="antigravity-info-uninstall-btn" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;cursor:pointer;padding:7.5px 12px;border-radius:8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;" title="إزالة وحذف تثبيت الحزمة العربية">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>إلغاء التثبيت</span>
             </button>
           </div>
           
@@ -1304,6 +1310,23 @@ const INJECT_CODE = `
     if (reinstallBtn) {
       reinstallBtn.onclick = () => {
         startInteractiveUpdate(modal, { version: CURRENT_VERSION });
+      };
+    }
+
+    const uninstallBtn = modal.querySelector('#antigravity-info-uninstall-btn');
+    if (uninstallBtn) {
+      uninstallBtn.onclick = () => {
+        if (!confirm('هل تريد إلغاء تثبيت الحزمة العربية بالكامل وإزالتها من الواجهة؟')) return;
+        modal.remove();
+        // Remove Suite UI components cleanly
+        removeUpdateCapsule();
+        const widget = document.getElementById('antigravity-model-quota-widget');
+        if (widget) widget.remove();
+        const popover = document.getElementById('antigravity-quota-popover');
+        if (popover) popover.remove();
+        const style = document.getElementById('antigravity-arabic-suite-styles');
+        if (style) style.remove();
+        showUpdateToast('تم إلغاء تثبيت وإزالة الحزمة العربية بنجاح', 'info');
       };
     }
 
