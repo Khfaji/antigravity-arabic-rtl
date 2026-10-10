@@ -490,15 +490,11 @@ const INJECT_CODE = `
         widget.style.cssText = 'position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;margin-right:2px;z-index:40;';
         
         // Hover popover trigger
-        let hideTimeout = null;
         widget.addEventListener('mouseenter', () => {
-          if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
           showQuotaPopover();
         });
         widget.addEventListener('mouseleave', () => {
-          hideTimeout = setTimeout(() => {
-            hideQuotaPopover();
-          }, 250);
+          scheduleHideQuotaPopover();
         });
 
         // Click to refresh immediately
@@ -560,7 +556,14 @@ const INJECT_CODE = `
     } catch (e) {}
   }
 
+  let popoverHideTimer = null;
+
   function showQuotaPopover() {
+    if (popoverHideTimer) {
+      clearTimeout(popoverHideTimer);
+      popoverHideTimer = null;
+    }
+
     let popover = document.getElementById('antigravity-quota-popover');
     if (!popover) {
       popover = document.createElement('div');
@@ -586,19 +589,18 @@ const INJECT_CODE = `
         'flex-direction: column',
         'gap: 10px',
         'backdrop-filter: blur(16px)',
-        'overflow: hidden'
+        'overflow: hidden',
+        'pointer-events: auto'
       ].join(';');
 
       popover.addEventListener('mouseenter', () => {
-        popover.setAttribute('data-hovered', 'true');
+        if (popoverHideTimer) {
+          clearTimeout(popoverHideTimer);
+          popoverHideTimer = null;
+        }
       });
       popover.addEventListener('mouseleave', () => {
-        popover.removeAttribute('data-hovered');
-        setTimeout(() => {
-          if (!popover.getAttribute('data-hovered')) {
-            popover.style.display = 'none';
-          }
-        }, 200);
+        scheduleHideQuotaPopover();
       });
 
       document.body.appendChild(popover);
@@ -608,7 +610,7 @@ const INJECT_CODE = `
     const widget = document.getElementById('antigravity-model-quota-widget');
     if (widget) {
       const rect = widget.getBoundingClientRect();
-      popover.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+      popover.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
       // Align near widget horizontally
       const rightCoord = Math.max(16, window.innerWidth - rect.right - 20);
       popover.style.right = rightCoord + 'px';
@@ -618,11 +620,15 @@ const INJECT_CODE = `
     popover.style.display = 'flex';
   }
 
-  function hideQuotaPopover() {
-    const popover = document.getElementById('antigravity-quota-popover');
-    if (popover && !popover.getAttribute('data-hovered')) {
-      popover.style.display = 'none';
-    }
+  function scheduleHideQuotaPopover() {
+    if (popoverHideTimer) clearTimeout(popoverHideTimer);
+    popoverHideTimer = setTimeout(() => {
+      const popover = document.getElementById('antigravity-quota-popover');
+      if (popover) {
+        popover.style.display = 'none';
+      }
+      popoverHideTimer = null;
+    }, 350);
   }
 
   function fillPopoverContent(popover) {
@@ -671,8 +677,18 @@ const INJECT_CODE = `
       <div style="display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:220px;padding-left:2px;padding-right:2px;">
     \`;
 
-    // Render other models
-    const others = allConfigs.filter(c => c !== activeModel);
+    // Render other models with fixed, deterministic sorting to prevent jumping
+    const seen = new Set();
+    const others = allConfigs
+      .filter(c => {
+        if (!c || !c.label) return false;
+        if (c.label === activeLabel || (activeModel && c.modelId === activeModel.modelId)) return false;
+        if (seen.has(c.label)) return false;
+        seen.add(c.label);
+        return true;
+      })
+      .sort((a, b) => a.label.localeCompare(b.label));
+
     others.forEach(m => {
       const f = m.quotaInfo?.remainingFraction ?? 1;
       const p = Math.round(f * 100);

@@ -36,6 +36,8 @@ function getInjectCode() {
   }
 }
 
+const injectedPageIds = new Set();
+
 async function checkAndInjectLive() {
   const injectCode = getInjectCode();
   if (!injectCode) return;
@@ -52,8 +54,17 @@ async function checkAndInjectLive() {
       const pages = await res.json().catch(() => []);
       if (!Array.isArray(pages)) continue;
 
+      // Clean up dead pages from our set
+      const currentPageIds = new Set(pages.map(p => p.id));
+      for (const id of injectedPageIds) {
+        if (!currentPageIds.has(id)) {
+          injectedPageIds.delete(id);
+        }
+      }
+
       for (const page of pages) {
         if (page.type !== 'page' || !page.webSocketDebuggerUrl) continue;
+        if (injectedPageIds.has(page.id)) continue;
 
         try {
           const ws = new WebSocket(page.webSocketDebuggerUrl);
@@ -64,6 +75,7 @@ async function checkAndInjectLive() {
                 method: 'Runtime.evaluate',
                 params: { expression: injectCode, returnByValue: true }
               }));
+              injectedPageIds.add(page.id);
             } catch (e) {}
           };
           ws.onmessage = () => {
