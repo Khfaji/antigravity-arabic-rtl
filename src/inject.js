@@ -626,7 +626,6 @@ const INJECT_CODE = `
 
   // --- Update Notification & Self-Updater System ---
   const CURRENT_VERSION = '1.3.0';
-  let availableUpdateInfo = null;
 
   async function checkForUpdates() {
     try {
@@ -636,7 +635,7 @@ const INJECT_CODE = `
       if (!data || !data.version) return;
 
       if (isNewerVersion(data.version, CURRENT_VERSION)) {
-        availableUpdateInfo = data;
+        window.__antigravity_available_update = data;
         
         // Auto-update if user enabled it previously
         const isAuto = localStorage.getItem('__antigravity_auto_update') === 'true';
@@ -650,8 +649,11 @@ const INJECT_CODE = `
           renderUpdateCapsule(widget);
         }
       } else {
-        availableUpdateInfo = null;
-        removeUpdateCapsule();
+        window.__antigravity_available_update = null;
+        const widget = document.getElementById('antigravity-model-quota-widget');
+        if (widget) {
+          renderUpdateCapsule(widget);
+        }
       }
     } catch (e) {}
   }
@@ -679,9 +681,10 @@ const INJECT_CODE = `
 
   function renderUpdateCapsule(widget) {
     let capsule = document.getElementById('antigravity-update-capsule');
+    const updateInfo = window.__antigravity_available_update;
 
     // Case 1: An update is available -> Deep vibrant blue pill with download circle icon and pulse
-    if (availableUpdateInfo) {
+    if (updateInfo) {
       if (!capsule) {
         capsule = document.createElement('button');
         capsule.id = 'antigravity-update-capsule';
@@ -719,7 +722,7 @@ const INJECT_CODE = `
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
         </div>
-        <span style="letter-spacing:0.2px;">تحديث جديد \${availableUpdateInfo.version}</span>
+        <span style="letter-spacing:0.2px;">تحديث جديد \${updateInfo.version}</span>
       \`;
 
       capsule.onclick = (e) => {
@@ -787,7 +790,8 @@ const INJECT_CODE = `
 
   // Modal 1: When an update is available (Update Now + Changelog + Auto-Update Checkbox)
   function openUpdateModal() {
-    if (!availableUpdateInfo) return;
+    const updateInfo = window.__antigravity_available_update;
+    if (!updateInfo) return;
 
     let modal = document.getElementById('antigravity-update-modal');
     if (modal) modal.remove();
@@ -811,7 +815,7 @@ const INJECT_CODE = `
       'color: var(--foreground, #e2e8f0)'
     ].join(';');
 
-    const changelogItems = (availableUpdateInfo.changelog || [])
+    const changelogItems = (updateInfo.changelog || [])
       .map(item => \`<li style="margin-bottom:8px;display:flex;align-items:flex-start;gap:9px;"><span style="color:#38bdf8;font-size:12px;margin-top:2px;">✦</span><span style="font-size:13.5px;line-height:1.5;">\${item}</span></li>\`)
       .join('');
 
@@ -830,7 +834,7 @@ const INJECT_CODE = `
             </div>
             <div>
               <div style="font-size:16px;font-weight:700;">يتوفر إصدار جديد!</div>
-              <div style="font-size:12px;opacity:0.75;margin-top:1px;">\${availableUpdateInfo.name || ('الإصدار ' + availableUpdateInfo.version)}</div>
+              <div style="font-size:12px;opacity:0.75;margin-top:1px;">\${updateInfo.name || ('الإصدار ' + updateInfo.version)}</div>
             </div>
           </div>
           <button id="antigravity-modal-close" style="background:none;border:none;color:currentColor;cursor:pointer;font-size:18px;opacity:0.6;padding:5px 8px;border-radius:8px;line-height:1;display:flex;align-items:center;justify-content:center;" title="إغلاق">
@@ -903,7 +907,7 @@ const INJECT_CODE = `
       updateBtn.onclick = async () => {
         updateBtn.disabled = true;
         updateBtn.innerHTML = '<span>جاري التحميل والحقن...</span>';
-        await performLiveHotUpdate(availableUpdateInfo.version);
+        await performLiveHotUpdate(updateInfo.version);
         modal.remove();
       };
     }
