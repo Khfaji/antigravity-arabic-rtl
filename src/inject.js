@@ -597,11 +597,12 @@ const INJECT_CODE = `
         widget.innerHTML = \`
           <div style="position:relative;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background-color 0.15s ease;" class="hover:bg-secondary" title="\${displayLabel} (\${pct}% متبقي) - انقر للتحديث">
             <svg width="28" height="28" viewBox="0 0 28 28" style="transform:rotate(-90deg);">
-              <circle cx="14" cy="14" r="11" fill="none" stroke="currentColor" stroke-width="2.5" opacity="0.18"/>
-              <circle cx="14" cy="14" r="11" fill="none" stroke="\${strokeColor}" stroke-width="2.5" stroke-linecap="round"
-                      stroke-dasharray="\${strokeDash} \${circumference}" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;"/>
+              <circle cx="14" cy="14" r="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.5 2.5" opacity="0.25"/>
+              <circle cx="14" cy="14" r="11" fill="none" stroke="\${strokeColor}" stroke-width="1.8"
+                      stroke-dasharray="\${strokeDash} \${circumference}" style="stroke-dasharray: 2.5 2; transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;" stroke-linecap="round"/>
+              <circle cx="14" cy="14" r="11" fill="none" stroke="\${strokeColor}" stroke-width="1.8" stroke-dasharray="\${strokeDash} \${circumference}" opacity="0.4" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;"/>
             </svg>
-            <span style="position:absolute;font-size:10px;font-weight:800;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:-0.5px;">\${pct}%</span>
+            <span style="position:absolute;font-size:11px;font-weight:500;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:0;">\${pct}</span>
           </div>
         \`;
       }
