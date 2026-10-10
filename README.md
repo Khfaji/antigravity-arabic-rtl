@@ -33,8 +33,10 @@
 
 ---
 
-## 💎 المميزات الحصرية والذكية
-
+* ⚡ **عداد دائري ذكي لحصة النماذج (Model Quotas Circular Gauge & Popover):**
+  - **مؤشر دائري بجوار أيقونة الملاحظة الصوتية (Voice Memo):** يوضح النسبة المتبقية من حصة النموذج النشط حالياً مع تلوين ديناميكي ذكي (أخضر $\leftarrow$ برتقالي $\leftarrow$ أحمر).
+  - **نافذة تفصيلية عائمة (Interactive Quotas Popover):** عند التمرير بالماوس (`Hover`)، تظهر قائمة أنيقة ومنسقة بجميع المودلات المتاحة (Gemini, Claude, GPT) ونسبة الاستخدام المتبقية ووقت التجديد التلقائي لكل منها.
+  - **تحديث فوري ومباشر (Instant Refresh):** إمكانية النقر على العداد أو زر "تحديث" داخل النافذة لجلب أحدث حالة للرصيد فورياً دون الحاجة لإعادة تشغيل التطبيق.
 * 📝 **القوائم الذكية والتنقيط التلقائي الأصلي (Lexical Native Smart Lists):**
   - **الترقيم التلقائي المتسلسل (Smart Auto-Numbering):** يدعم الأرقام الغربية (`1.`, `1-`, `1)`) والأرقام العربية/المشرقية (`١.`, `١-`, `١)`)، حيث ينتقل تلقائياً للرقم التالي عند الضغط على `Enter` أو `Shift+Enter`.
   - **التنقيط الذكي (Smart Bullet Lists):** يحول تلقائياً الشرطة (`- `) أو النجمة (`* `) في بداية السطر الأول أو أي سطر إلى نقطة (`• `) قياسية وجميلة مع الحفاظ على محاذاة الـ RTL الكاملة.
@@ -57,7 +59,15 @@
 
 ## 📜 سجل الإصدارات والتغييرات (Changelog & Release History)
 
-### 🌟 الإصدار v1.2.0 (التحديث الأخير)
+### 🌟 الإصدار v1.3.0 (التحديث الأخير)
+* ⚡ **إضافة العداد الدائري لحصة النماذج (Model Quotas Circular Gauge & Popover):**
+  * إضافة عداد دائري تفاعلي وأنيق بجوار أيقونة الملاحظة الصوتية (Voice Memo) يعرض النسبة المئوية للمودل المحدد حالياً.
+  * نافذة عائمة ذكية تظهر عند التمرير (`Hover`) لعرض كافة النماذج المتاحة وحصصها المتبقية ووقت التجديد التلقائي.
+  * زر وتفاعل فوري لتحديث بيانات الحصص والرصيد مباشرة بنقرة واحدة.
+
+---
+
+### 📦 الإصدار v1.2.0
 * ✨ **إضافة نظام القوائم الذكية (Smart Lists) داخل محرر Lexical:**
   * **الترقيم التلقائي المتسلسل (Auto-Incrementing Numbering):** دعم الترقيم الذكي بالأرقام الإنجليزية (`1.`, `2.`) والأرقام العربية المشرقية (`١.`, `٢.`) مع استمرار الترقيم تلقائياً عند النزول لسطر جديد.
   * **التنقيط الذكي (Smart Bullet Formatting):** تحويل الشرطات (`- `) والنجوم (`* `) تلقائياً إلى نقاط تعداد (`• `) في السطر الأول وكافة السطور التالية.
@@ -176,6 +186,7 @@ install.bat
 ## 🌐 English Summary
 
 **Antigravity Arabic Suite** is a full-fledged bidirectional (BiDi) localization engine engineered specifically for Google Antigravity and Antigravity IDE on Windows:
+* **Model Quota Circular Gauge & Hover Popover:** Elegant circular progress indicator right next to the voice memo button displaying real-time remaining quota for the active model with color thresholds, instant refresh on click, and an interactive popover showing all available models and their reset times.
 * **Smart Auto-Lists & Bullets:** Native Lexical AST manipulation for auto-incrementing numbered lists (both Latin `1.` and Eastern Arabic `١.`) and automatic `- ` / `* ` to `• ` bullet conversion without cursor jumping or text loss.
 * **True Line-by-Line BiDi:** Allows mixed-language paragraphs in Lexical chat input without cross-line text corruption.
 * **Predominant Language Counting:** Calculates character frequency to determine line direction, keeping code and tech terms strictly LTR.

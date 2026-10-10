@@ -398,6 +398,334 @@ const INJECT_CODE = `
         }
       }
     } catch (e) {}
+
+    // Model Quota Circular Widget & Details Popover
+    try {
+      updateModelQuotaWidget();
+    } catch (e) {}
+  }
+
+  // --- Model Quota Widget Implementation ---
+  let cachedUserStatus = null;
+  let lastFetchTime = 0;
+  let isFetchingStatus = false;
+
+  async function fetchUserStatus() {
+    if (isFetchingStatus) return;
+    const now = Date.now();
+    // Throttle fetches: at most once every 10 seconds unless forced
+    if (now - lastFetchTime < 10000 && cachedUserStatus) return;
+    
+    isFetchingStatus = true;
+    try {
+      const csrf = window.__APP_CONFIG__?.csrfToken || '';
+      const res = await fetch('/exa.language_server_pb.LanguageServerService/GetUserStatus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-codeium-csrf-token': csrf
+        },
+        body: JSON.stringify({})
+      });
+      if (res.ok) {
+        const data = await res.json();
+        cachedUserStatus = data;
+        lastFetchTime = Date.now();
+        renderModelQuotaWidget();
+      }
+    } catch (err) {
+    } finally {
+      isFetchingStatus = false;
+    }
+  }
+
+  function getActiveModelAndQuota() {
+    if (!cachedUserStatus) return null;
+    const configs = cachedUserStatus.userStatus?.cascadeModelConfigData?.clientModelConfigs || [];
+    const trigger = document.querySelector('[data-testid="model-selector-trigger"]');
+    const triggerRaw = trigger?.textContent || '';
+    const triggerClean = triggerRaw.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    let activeModel = configs.find(c => {
+      const cleanLabel = c.label.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return cleanLabel === triggerClean || triggerClean.includes(cleanLabel) || cleanLabel.includes(triggerClean);
+    });
+
+    if (!activeModel && configs.length > 0) {
+      activeModel = configs[0];
+    }
+
+    return {
+      activeModel,
+      allConfigs: configs,
+      triggerLabel: triggerRaw.trim()
+    };
+  }
+
+  function formatTimeRemaining(isoDateStr) {
+    if (!isoDateStr) return '';
+    try {
+      const resetTime = new Date(isoDateStr).getTime();
+      const now = Date.now();
+      const diffMs = resetTime - now;
+      if (diffMs <= 0) return 'جاهز للتجديد الآن';
+      const diffMins = Math.floor(diffMs / 60000);
+      const hours = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      if (hours > 0) {
+        return 'يتجدد بعد ' + hours + ' س و ' + mins + ' د';
+      }
+      return 'يتجدد بعد ' + mins + ' د';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function renderModelQuotaWidget() {
+    try {
+      const micBtn = document.querySelector('button[aria-label="Record voice memo"]');
+      if (!micBtn || !micBtn.parentElement) return;
+
+      const info = getActiveModelAndQuota();
+      let widget = document.getElementById('antigravity-model-quota-widget');
+
+      if (!widget) {
+        widget = document.createElement('div');
+        widget.id = 'antigravity-model-quota-widget';
+        widget.style.cssText = 'position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;margin-right:2px;z-index:40;';
+        
+        // Hover popover trigger
+        let hideTimeout = null;
+        widget.addEventListener('mouseenter', () => {
+          if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+          showQuotaPopover();
+        });
+        widget.addEventListener('mouseleave', () => {
+          hideTimeout = setTimeout(() => {
+            hideQuotaPopover();
+          }, 250);
+        });
+
+        // Click to refresh immediately
+        widget.addEventListener('click', (e) => {
+          e.stopPropagation();
+          lastFetchTime = 0; // force refresh
+          fetchUserStatus();
+        });
+      }
+
+      if (micBtn.parentElement !== widget.parentElement || widget.nextElementSibling !== micBtn) {
+        micBtn.parentElement.insertBefore(widget, micBtn);
+      }
+
+      // Calculate percentage and color
+      let pct = 100;
+      let strokeColor = '#10b981'; // green
+      let displayLabel = 'المودل';
+
+      if (info && info.activeModel) {
+        displayLabel = info.activeModel.label;
+        const fraction = info.activeModel.quotaInfo?.remainingFraction;
+        if (typeof fraction === 'number') {
+          pct = Math.round(fraction * 100);
+        }
+      }
+
+      if (pct > 60) {
+        strokeColor = '#10b981'; // Green
+      } else if (pct > 25) {
+        strokeColor = '#f59e0b'; // Amber / Orange
+      } else {
+        strokeColor = '#ef4444'; // Red
+      }
+
+      const circumference = 59.7;
+      const strokeDash = (circumference * (pct / 100)).toFixed(1);
+
+      widget.innerHTML = \`
+        <div style="position:relative;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background-color 0.15s ease;" class="hover:bg-secondary" title="\${displayLabel} (\${pct}% متبقي) - انقر للتحديث">
+          <svg width="24" height="24" viewBox="0 0 24 24" style="transform:rotate(-90deg);">
+            <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2.2" opacity="0.18"/>
+            <circle cx="12" cy="12" r="9.5" fill="none" stroke="\${strokeColor}" stroke-width="2.2" stroke-linecap="round"
+                    stroke-dasharray="\${strokeDash} \${circumference}" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;"/>
+          </svg>
+          <span style="position:absolute;font-size:8.5px;font-weight:700;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:-0.5px;">\${pct}%</span>
+        </div>
+      \`;
+
+      // Update open popover content if visible
+      const popover = document.getElementById('antigravity-quota-popover');
+      if (popover && popover.style.display !== 'none') {
+        fillPopoverContent(popover);
+      }
+    } catch (e) {}
+  }
+
+  function showQuotaPopover() {
+    let popover = document.getElementById('antigravity-quota-popover');
+    if (!popover) {
+      popover = document.createElement('div');
+      popover.id = 'antigravity-quota-popover';
+      popover.setAttribute('dir', 'rtl');
+      popover.style.cssText = [
+        'position: fixed',
+        'bottom: 85px',
+        'right: 20px',
+        'width: 320px',
+        'max-width: calc(100vw - 40px)',
+        'max-height: 480px',
+        'background: var(--card, #1e1e2e)',
+        'color: var(--foreground, #cdd6f4)',
+        'border: 1px solid var(--border, rgba(255,255,255,0.12))',
+        'border-radius: 12px',
+        'box-shadow: 0 12px 36px rgba(0,0,0,0.45)',
+        'padding: 12px',
+        'font-family: system-ui, -apple-system, sans-serif',
+        'font-size: 12px',
+        'z-index: 99999',
+        'display: flex',
+        'flex-direction: column',
+        'gap: 10px',
+        'backdrop-filter: blur(16px)',
+        'overflow: hidden'
+      ].join(';');
+
+      popover.addEventListener('mouseenter', () => {
+        popover.setAttribute('data-hovered', 'true');
+      });
+      popover.addEventListener('mouseleave', () => {
+        popover.removeAttribute('data-hovered');
+        setTimeout(() => {
+          if (!popover.getAttribute('data-hovered')) {
+            popover.style.display = 'none';
+          }
+        }, 200);
+      });
+
+      document.body.appendChild(popover);
+    }
+
+    // Align popover relative to widget
+    const widget = document.getElementById('antigravity-model-quota-widget');
+    if (widget) {
+      const rect = widget.getBoundingClientRect();
+      popover.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+      // Align near widget horizontally
+      const rightCoord = Math.max(16, window.innerWidth - rect.right - 20);
+      popover.style.right = rightCoord + 'px';
+    }
+
+    fillPopoverContent(popover);
+    popover.style.display = 'flex';
+  }
+
+  function hideQuotaPopover() {
+    const popover = document.getElementById('antigravity-quota-popover');
+    if (popover && !popover.getAttribute('data-hovered')) {
+      popover.style.display = 'none';
+    }
+  }
+
+  function fillPopoverContent(popover) {
+    const info = getActiveModelAndQuota();
+    if (!info) {
+      popover.innerHTML = '<div style="padding:10px;text-align:center;">جاري جلب بيانات الاستخدام والمودلات...</div>';
+      return;
+    }
+
+    const { activeModel, allConfigs } = info;
+    const activeLabel = activeModel ? activeModel.label : info.triggerLabel;
+    const activeFraction = activeModel?.quotaInfo?.remainingFraction ?? 1;
+    const activePct = Math.round(activeFraction * 100);
+    const activeReset = formatTimeRemaining(activeModel?.quotaInfo?.resetTime);
+
+    let activeColor = activePct > 60 ? '#10b981' : (activePct > 25 ? '#f59e0b' : '#ef4444');
+
+    let html = \`
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border, rgba(255,255,255,0.08));padding-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;">
+          <span>⚡ حصة النماذج (Model Quotas)</span>
+        </div>
+        <button id="antigravity-refresh-quota-btn" style="background:transparent;border:none;cursor:pointer;color:currentColor;opacity:0.75;display:flex;align-items:center;padding:4px;border-radius:4px;font-size:11px;gap:4px;" title="تحديث الحصة الآن">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          <span>تحديث</span>
+        </button>
+      </div>
+
+      <!-- Active Model Card -->
+      <div style="background:var(--secondary, rgba(255,255,255,0.06));border-radius:8px;padding:9px;border:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:11px;opacity:0.7;margin-bottom:2px;">المودل المحدد حالياً:</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-weight:700;font-size:12.5px;color:var(--foreground, currentColor);">\${activeLabel}</span>
+          <span style="font-weight:700;color:\${activeColor};">\${activePct}%</span>
+        </div>
+        <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:4px;">
+          <div style="width:\${activePct}%;height:100%;background:\${activeColor};border-radius:3px;transition:width 0.3s ease;"></div>
+        </div>
+        \${activeReset ? \`<div style="font-size:10.5px;opacity:0.65;display:flex;align-items:center;gap:4px;">⏱️ \${activeReset}</div>\` : ''}
+      </div>
+
+      <!-- Other Models List -->
+      <div style="font-size:11px;font-weight:700;opacity:0.8;margin-top:2px;">بقية المودلات المتاحة:</div>
+      <div style="display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:220px;padding-left:2px;padding-right:2px;">
+    \`;
+
+    // Render other models
+    const others = allConfigs.filter(c => c !== activeModel);
+    others.forEach(m => {
+      const f = m.quotaInfo?.remainingFraction ?? 1;
+      const p = Math.round(f * 100);
+      const col = p > 60 ? '#10b981' : (p > 25 ? '#f59e0b' : '#ef4444');
+      const reset = formatTimeRemaining(m.quotaInfo?.resetTime);
+
+      html += \`
+        <div style="display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:11.5px;font-weight:500;">\${m.label}</span>
+            <span style="font-weight:700;font-size:11px;color:\${col};">\${p}%</span>
+          </div>
+          <div style="width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
+            <div style="width:\${p}%;height:100%;background:\${col};border-radius:2px;"></div>
+          </div>
+          \${reset ? \`<div style="font-size:9.5px;opacity:0.55;">\${reset}</div>\` : ''}
+        </div>
+      \`;
+    });
+
+    html += \`
+      </div>
+    \`;
+
+    popover.innerHTML = html;
+
+    const refreshBtn = popover.querySelector('#antigravity-refresh-quota-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        refreshBtn.innerHTML = '<span>جاري التحديث...</span>';
+        lastFetchTime = 0;
+        fetchUserStatus();
+      });
+    }
+  }
+
+  function updateModelQuotaWidget() {
+    // Check if mic button exists and if we should fetch data
+    const micBtn = document.querySelector('button[aria-label="Record voice memo"]');
+    if (!micBtn) return;
+
+    if (!cachedUserStatus) {
+      fetchUserStatus();
+    } else {
+      // Background poll every 30s
+      if (Date.now() - lastFetchTime > 30000) {
+        fetchUserStatus();
+      }
+    }
+
+    renderModelQuotaWidget();
   }
 
   // Initial fix
