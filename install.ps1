@@ -14,9 +14,10 @@ $ErrorActionPreference = "Stop"
 [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
 $OutputEncoding           = [System.Text.Encoding]::UTF8
 
-# Try setting active console code page to 65001 if on standard conhost
+# Try setting active console code page and ensure true font supports Unicode
 try {
     & chcp 65001 >$null 2>&1
+    Set-ItemProperty -Path "HKCU:\Console" -Name "CodePage" -Value 65001 -Type DWord -ErrorAction SilentlyContinue
 } catch {}
 
 Clear-Host
