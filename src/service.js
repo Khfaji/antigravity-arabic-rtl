@@ -98,7 +98,9 @@ async function syncRemoteFiles() {
     const vData = await vRes.json().catch(() => null);
     if (!vData || !vData.version) return;
 
-    const localVersionPath = path.join(__dirname, '..', 'version.json');
+    const localVersionPath = fs.existsSync(path.join(__dirname, 'version.json'))
+      ? path.join(__dirname, 'version.json')
+      : path.join(__dirname, '..', 'version.json');
     let localVersion = '1.0.0';
     if (fs.existsSync(localVersionPath)) {
       try {
