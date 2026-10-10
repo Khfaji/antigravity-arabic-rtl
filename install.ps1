@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 <#
 .SYNOPSIS
     Antigravity Arabic Suite - Interactive Visual Terminal Setup
@@ -8,7 +8,16 @@
 #>
 
 $ErrorActionPreference = "Stop"
+
+# Force standard UTF-8 for Output and Input streams
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding  = [System.Text.Encoding]::UTF8
+$OutputEncoding           = [System.Text.Encoding]::UTF8
+
+# Try setting active console code page to 65001 if on standard conhost
+try {
+    & chcp 65001 >$null 2>&1
+} catch {}
 
 Clear-Host
 Write-Host ""
@@ -272,3 +281,15 @@ Write-Host "  * عدادات الاستهلاك مدمجة (يومي / أسبو�
 Write-Host "  * لوحة معلومات الحزمة مع مسار التحديثات وزر إلغاء التثبيت المباشر" -ForegroundColor White
 Write-Host "  * مراقبة تلقائية وحقن فوري مستمر في الخلفية دون أي جهد" -ForegroundColor White
 Write-Host ""
+Write-Host "==========================================================================" -ForegroundColor DarkGray
+Write-Host "  اكتمل التثبيت بنجاح. النافذة ستبقى مفتوحة لمراجعة التفاصيل." -ForegroundColor Green
+Write-Host "  اضغط على أي مفتاح للإغلاق عند الانتهاء..." -ForegroundColor Gray
+Write-Host "==========================================================================" -ForegroundColor DarkGray
+Write-Host ""
+
+# Keep window open whether executed directly or via shortcut/cmd
+try {
+    [Console]::ReadKey($true) | Out-Null
+} catch {
+    Read-Host "اضغط Enter للإغلاق..."
+}
