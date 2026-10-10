@@ -398,11 +398,6 @@ const INJECT_CODE = `
         }
       }
     } catch (e) {}
-
-    // Model Quota Circular Widget & Details Popover
-    try {
-      updateModelQuotaWidget();
-    } catch (e) {}
   }
 
   // --- Model Quota Widget Implementation ---
@@ -542,16 +537,20 @@ const INJECT_CODE = `
       const circumference = 59.7;
       const strokeDash = (circumference * (pct / 100)).toFixed(1);
 
-      widget.innerHTML = \`
-        <div style="position:relative;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background-color 0.15s ease;" class="hover:bg-secondary" title="\${displayLabel} (\${pct}% متبقي) - انقر للتحديث">
-          <svg width="24" height="24" viewBox="0 0 24 24" style="transform:rotate(-90deg);">
-            <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2.2" opacity="0.18"/>
-            <circle cx="12" cy="12" r="9.5" fill="none" stroke="\${strokeColor}" stroke-width="2.2" stroke-linecap="round"
-                    stroke-dasharray="\${strokeDash} \${circumference}" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;"/>
-          </svg>
-          <span style="position:absolute;font-size:8.5px;font-weight:700;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:-0.5px;">\${pct}%</span>
-        </div>
-      \`;
+      const stateKey = displayLabel + '_' + pct;
+      if (widget.getAttribute('data-state-key') !== stateKey) {
+        widget.setAttribute('data-state-key', stateKey);
+        widget.innerHTML = \`
+          <div style="position:relative;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background-color 0.15s ease;" class="hover:bg-secondary" title="\${displayLabel} (\${pct}% متبقي) - انقر للتحديث">
+            <svg width="24" height="24" viewBox="0 0 24 24" style="transform:rotate(-90deg);">
+              <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2.2" opacity="0.18"/>
+              <circle cx="12" cy="12" r="9.5" fill="none" stroke="\${strokeColor}" stroke-width="2.2" stroke-linecap="round"
+                      stroke-dasharray="\${strokeDash} \${circumference}" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;"/>
+            </svg>
+            <span style="position:absolute;font-size:8.5px;font-weight:700;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:-0.5px;">\${pct}%</span>
+          </div>
+        \`;
+      }
 
       // Update open popover content if visible
       const popover = document.getElementById('antigravity-quota-popover');
@@ -731,12 +730,23 @@ const INJECT_CODE = `
   // Initial fix
   fixAllArabic();
 
-  // 4. Persistent Mutation Observer
+  // 4. Persistent Mutation Observer (RTL only)
   if (window.__antigravity_rtl_observer) {
     window.__antigravity_rtl_observer.disconnect();
   }
-  window.__antigravity_rtl_observer = new MutationObserver(function() {
-    fixAllArabic();
+  window.__antigravity_rtl_observer = new MutationObserver(function(mutations) {
+    // Ignore mutations caused by our own quota widget/popover to avoid loops
+    let onlyWidget = true;
+    for (let i = 0; i < mutations.length; i++) {
+      const target = mutations[i].target;
+      if (!target || !target.closest || (!target.closest('#antigravity-model-quota-widget') && !target.closest('#antigravity-quota-popover'))) {
+        onlyWidget = false;
+        break;
+      }
+    }
+    if (!onlyWidget) {
+      fixAllArabic();
+    }
   });
   window.__antigravity_rtl_observer.observe(document.body, { 
     childList: true, 
@@ -744,11 +754,23 @@ const INJECT_CODE = `
     characterData: true 
   });
 
-  // 5. Fast Periodic Backup Timer (guarantees continuous application)
+  // 5. Fast Periodic Backup Timer for RTL
   if (window.__antigravity_rtl_interval) {
     clearInterval(window.__antigravity_rtl_interval);
   }
-  window.__antigravity_rtl_interval = setInterval(fixAllArabic, 300);
+  window.__antigravity_rtl_interval = setInterval(fixAllArabic, 600);
+
+  // 6. Completely Independent Quota Polling Timer (Calm: every 15s, does not trigger RTL loop)
+  if (window.__antigravity_quota_interval) {
+    clearInterval(window.__antigravity_quota_interval);
+  }
+  window.__antigravity_quota_interval = setInterval(() => {
+    try { updateModelQuotaWidget(); } catch (e) {}
+  }, 15000);
+  // Initial quota widget render
+  setTimeout(() => {
+    try { updateModelQuotaWidget(); } catch (e) {}
+  }, 500);
 
   return 'SUCCESS';
 })();
