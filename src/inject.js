@@ -606,13 +606,32 @@ const INJECT_CODE = `
     };
   }
 
-  function computeEffectiveQuota(modelConfig, quotaSummary) {
-    const d = computeModelDetailedQuota(modelConfig, quotaSummary);
-    return {
-      fraction: d.effectivePct / 100,
-      pct: d.effectivePct,
-      resetTime: d.hourlyReset || d.weeklyReset
-    };
+  function renderMiniCircularRing(pct, size = 30) {
+    let strokeColor = '#10b981';
+    if (pct > 60) strokeColor = '#10b981';
+    else if (pct > 25) strokeColor = '#f59e0b';
+    else if (pct >= 0) strokeColor = '#ef4444';
+    else strokeColor = 'currentColor';
+
+    const safePct = pct < 0 ? 0 : pct;
+    const r = 11;
+    const circumference = 69.1; // 2 * Math.PI * 11
+    const strokeDash = (circumference * (safePct / 100)).toFixed(1);
+    const displayVal = pct < 0 ? '…' : String(pct);
+
+    const fSize = size <= 26 ? '9.5px' : '11px';
+    return \`
+      <div style="position:relative;width:\${size}px;height:\${size}px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="\${size}" height="\${size}" viewBox="0 0 28 28" style="transform:rotate(-90deg);">
+          <circle cx="14" cy="14" r="\${r}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.5 2.5" opacity="0.25"/>
+          <circle cx="14" cy="14" r="\${r}" fill="none" stroke="\${strokeColor}" stroke-width="1.8"
+                  stroke-dasharray="\${strokeDash} \${circumference}" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;" stroke-linecap="round"/>
+          <circle cx="14" cy="14" r="\${r}" fill="none" stroke="\${strokeColor}" stroke-width="1.8"
+                  stroke-dasharray="\${strokeDash} \${circumference}" opacity="0.4" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;"/>
+        </svg>
+        <span style="position:absolute;font-size:\${fSize};font-weight:700;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:0;">\${displayVal}</span>
+      </div>
+    \`;
   }
 
   function renderModelQuotaWidget() {
@@ -1313,23 +1332,33 @@ const INJECT_CODE = `
       </div>
 
       <!-- Active Model Card -->
-      <div style="background:var(--secondary, rgba(255,255,255,0.08));border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:12px;opacity:0.75;margin-bottom:4px;font-weight:500;">النموذج المحدد حالياً:</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;direction:ltr;">
-          <span style="font-weight:700;font-size:14px;color:var(--foreground, currentColor);text-align:left;">\${activeLabelClean}</span>
-          <span style="font-weight:800;font-size:14px;color:\${activeColor};text-align:right;">\${activeHourlyPct}%</span>
-        </div>
-        <div style="width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;margin-bottom:8px;direction:ltr;">
-          <div style="width:\${activeHourlyPct}%;height:100%;background:\${activeColor};border-radius:4px;transition:width 0.3s ease;"></div>
+      <div style="background:var(--secondary, rgba(255,255,255,0.08));border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,0.12);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div>
+            <div style="font-size:11.5px;opacity:0.7;margin-bottom:2px;font-weight:500;">النموذج المحدد حالياً:</div>
+            <div style="font-weight:700;font-size:14.5px;color:var(--foreground, currentColor);direction:ltr;text-align:right;">\${activeLabelClean}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <!-- 5h circular meter -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;" title="حصة 5 ساعات: \${activeHourlyPct}%">
+              \${renderMiniCircularRing(activeHourlyPct, 32)}
+              <span style="font-size:10px;font-weight:600;opacity:0.8;">5 ساعات</span>
+            </div>
+            <!-- Weekly circular meter -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;" title="التجديد الأسبوعي: \${activeWeeklyPct}%">
+              \${renderMiniCircularRing(activeWeeklyPct, 32)}
+              <span style="font-size:10px;font-weight:600;color:#38bdf8;">أسبوعي</span>
+            </div>
+          </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;opacity:0.85;">
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11.5px;opacity:0.85;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span>⏱️ حصة 5 ساعات (\${activeHourlyPct}%):</span>
+            <span>⏱️ تجديد 5 ساعات:</span>
             <span style="font-weight:700;">\${activeHourlyReset || 'جاهز للتجديد'}</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;color:#38bdf8;">
-            <span>📅 التجديد الأسبوعي (\${activeWeeklyPct}%):</span>
+            <span>📅 التجديد الأسبوعي:</span>
             <span style="font-weight:700;">\${activeWeeklyReset || 'مكتمل'}</span>
           </div>
         </div>
@@ -1337,7 +1366,7 @@ const INJECT_CODE = `
 
       <!-- Other Models List (Grouped without Speed Redundancy) -->
       <div style="font-size:12.5px;font-weight:700;opacity:0.85;margin-top:2px;">بقية المودلات:</div>
-      <div style="display:flex;flex-direction:column;gap:7px;overflow-y:auto;max-height:230px;padding-left:2px;padding-right:2px;">
+      <div style="display:flex;flex-direction:column;gap:7px;overflow-y:auto;max-height:240px;padding-left:2px;padding-right:2px;">
     \`;
 
     // Filter and group models: eliminate repetitive speed duplicates for Gemini
@@ -1383,22 +1412,29 @@ const INJECT_CODE = `
       const detailedM = computeModelDetailedQuota(m, cachedQuotaSummary);
       const hPct = detailedM.hourlyPct;
       const wPct = detailedM.weeklyPct;
-      const col = hPct > 60 ? '#10b981' : (hPct > 25 ? '#f59e0b' : '#ef4444');
       const hReset = formatTimeRemaining(detailedM.hourlyReset);
       const wReset = formatTimeRemaining(detailedM.weeklyReset);
 
       html += \`
-        <div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">
-          <div style="display:flex;align-items:center;justify-content:space-between;direction:ltr;">
-            <span style="font-size:13px;font-weight:600;text-align:left;">\${item.baseLabel}</span>
-            <span style="font-weight:800;font-size:12.5px;color:\${col};text-align:right;">\${hPct}%</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);gap:8px;">
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+            <span style="font-size:13px;font-weight:600;direction:ltr;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">\${item.baseLabel}</span>
+            <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;opacity:0.75;">
+              \${hReset ? \`<span>⏱️ \${hReset}</span>\` : ''}
+              \${wReset ? \`<span style="color:#38bdf8;">📅 \${wReset}</span>\` : ''}
+            </div>
           </div>
-          <div style="width:100%;height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;direction:ltr;">
-            <div style="width:\${hPct}%;height:100%;background:\${col};border-radius:3px;"></div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:0.75;margin-top:2px;">
-            \${hReset ? \`<span>⏱️ 5س (\${hPct}%): \${hReset}</span>\` : \`<span>⏱️ 5س: \${hPct}%</span>\`}
-            \${wReset ? \`<span style="color:#38bdf8;font-weight:600;">📅 أسبوعي (\${wPct}%): \${wReset}</span>\` : \`<span style="color:#38bdf8;font-weight:600;">📅 أسبوعي: \${wPct}%</span>\`}
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <!-- 5h meter -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;" title="5 ساعات: \${hPct}%">
+              \${renderMiniCircularRing(hPct, 26)}
+              <span style="font-size:9px;opacity:0.75;">5س</span>
+            </div>
+            <!-- Weekly meter -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;" title="أسبوعي: \${wPct}%">
+              \${renderMiniCircularRing(wPct, 26)}
+              <span style="font-size:9px;color:#38bdf8;opacity:0.9;">أسبوعي</span>
+            </div>
           </div>
         </div>
       \`;
