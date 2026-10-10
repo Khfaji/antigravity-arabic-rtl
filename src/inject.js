@@ -488,18 +488,23 @@ const INJECT_CODE = `
       officialSortLabels = sorts[0].groups[0].modelLabels || [];
     }
 
-    // Extract weekly quota details from cachedQuotaSummary
+    // Extract both 5h and weekly quota buckets from cachedQuotaSummary
+    let gemini5hBucket = null;
     let geminiWeeklyBucket = null;
+    let thirdParty5hBucket = null;
     let thirdPartyWeeklyBucket = null;
     const groups = cachedQuotaSummary?.response?.groups || [];
     for (const g of groups) {
       const gName = (g.displayName || '').toLowerCase();
       const buckets = g.buckets || [];
+      const b5h = buckets.find(b => b.window === '5h' || (b.bucketId && b.bucketId.includes('5h')));
       const weekly = buckets.find(b => b.window === 'weekly' || (b.bucketId && b.bucketId.includes('weekly')));
-      if (gName.includes('gemini') && weekly) {
-        geminiWeeklyBucket = weekly;
-      } else if ((gName.includes('claude') || gName.includes('gpt') || gName.includes('3p')) && weekly) {
-        thirdPartyWeeklyBucket = weekly;
+      if (gName.includes('gemini')) {
+        if (b5h) gemini5hBucket = b5h;
+        if (weekly) geminiWeeklyBucket = weekly;
+      } else if (gName.includes('claude') || gName.includes('gpt') || gName.includes('3p')) {
+        if (b5h) thirdParty5hBucket = b5h;
+        if (weekly) thirdPartyWeeklyBucket = weekly;
       }
     }
 
@@ -508,7 +513,9 @@ const INJECT_CODE = `
       allConfigs: configs,
       officialSortLabels,
       triggerLabel: triggerRaw.trim(),
+      gemini5hBucket,
       geminiWeeklyBucket,
+      thirdParty5hBucket,
       thirdPartyWeeklyBucket
     };
   }
@@ -537,8 +544,11 @@ const INJECT_CODE = `
     }
   }
 
-  function computeEffectiveQuota(modelConfig, quotaSummary) {
-    if (!modelConfig) return { fraction: 1, pct: 100, resetTime: '' };
+  // Returns { hourlyPct, weeklyPct, effectivePct, hourlyReset, weeklyReset }
+  function computeModelDetailedQuota(modelConfig, quotaSummary) {
+    if (!modelConfig) {
+      return { hourlyPct: 100, weeklyPct: 100, effectivePct: 100, hourlyReset: '', weeklyReset: '' };
+    }
 
     const label = (modelConfig.label || '').toLowerCase();
     const isGemini = /gemini|flash|pro|exp/i.test(label);
@@ -560,42 +570,49 @@ const INJECT_CODE = `
     const b5h = buckets.find(b => b.window === '5h' || (b.bucketId && b.bucketId.includes('5h')));
     const bWeekly = buckets.find(b => b.window === 'weekly' || (b.bucketId && b.bucketId.includes('weekly')));
 
-    const candidates = [];
-    let bestResetTime = modelConfig.quotaInfo?.resetTime || '';
-
-    // 1. Direct model quota if present
-    if (typeof modelConfig.quotaInfo?.remainingFraction === 'number') {
-      candidates.push(modelConfig.quotaInfo.remainingFraction);
-    }
-
-    // 2. 5h bucket limit (takes priority on immediate depletion)
+    // 1. Hourly (5-Hour) quota fraction: prioritize 5h bucket, fallback to model's direct fraction if present
+    let hFraction = 1;
+    let hReset = modelConfig.quotaInfo?.resetTime || '';
     if (b5h && typeof b5h.remainingFraction === 'number') {
-      candidates.push(b5h.remainingFraction);
-      if (!bestResetTime || (b5h.remainingFraction <= 0.05 && b5h.resetTime)) {
-        bestResetTime = b5h.resetTime;
-      }
+      hFraction = b5h.remainingFraction;
+      if (b5h.resetTime) hReset = b5h.resetTime;
+    } else if (typeof modelConfig.quotaInfo?.remainingFraction === 'number') {
+      hFraction = modelConfig.quotaInfo.remainingFraction;
     }
 
-    // 3. Weekly bucket limit
+    // 2. Weekly quota fraction
+    let wFraction = 1;
+    let wReset = '';
     if (bWeekly && typeof bWeekly.remainingFraction === 'number') {
-      candidates.push(bWeekly.remainingFraction);
-      if (bWeekly.remainingFraction <= 0.05 && bWeekly.resetTime) {
-        bestResetTime = bWeekly.resetTime;
-      }
+      wFraction = bWeekly.remainingFraction;
+      if (bWeekly.resetTime) wReset = bWeekly.resetTime;
     }
 
-    if (candidates.length > 0) {
-      // The true usable capacity is bounded by the strictest limit
-      const minFraction = Math.min(...candidates);
-      const safeFraction = Math.max(0, Math.min(1, minFraction));
-      return {
-        fraction: safeFraction,
-        pct: Math.round(safeFraction * 100),
-        resetTime: bestResetTime
-      };
+    const hourlyPct = Math.round(Math.max(0, Math.min(1, hFraction)) * 100);
+    const weeklyPct = Math.round(Math.max(0, Math.min(1, wFraction)) * 100);
+
+    // The active widget displays the 5-hour limit, but if either is 0 (fully depleted), show 0
+    let effectivePct = hourlyPct;
+    if (hourlyPct === 0 || weeklyPct === 0) {
+      effectivePct = 0;
     }
 
-    return { fraction: 1, pct: 100, resetTime: bestResetTime };
+    return {
+      hourlyPct,
+      weeklyPct,
+      effectivePct,
+      hourlyReset: hReset,
+      weeklyReset: wReset
+    };
+  }
+
+  function computeEffectiveQuota(modelConfig, quotaSummary) {
+    const d = computeModelDetailedQuota(modelConfig, quotaSummary);
+    return {
+      fraction: d.effectivePct / 100,
+      pct: d.effectivePct,
+      resetTime: d.hourlyReset || d.weeklyReset
+    };
   }
 
   function renderModelQuotaWidget() {
@@ -634,15 +651,19 @@ const INJECT_CODE = `
         micBtn.parentElement.insertBefore(widget, micBtn);
       }
 
-      // Calculate percentage and color using strict minimum effective quota
+      // Calculate percentage and color for circular widget (displays 5-hour quota)
       let pct = -1;
       let strokeColor = '#10b981'; // green
       let displayLabel = 'المودل';
 
       if (info && info.activeModel) {
         displayLabel = info.activeModel.label;
-        const effective = computeEffectiveQuota(info.activeModel, cachedQuotaSummary);
-        pct = effective.pct;
+        const detailed = computeModelDetailedQuota(info.activeModel, cachedQuotaSummary);
+        pct = detailed.hourlyPct;
+        // If either 5h or weekly is completely exhausted (0%), show 0%
+        if (detailed.hourlyPct === 0 || detailed.weeklyPct === 0) {
+          pct = 0;
+        }
       }
 
 
@@ -1267,19 +1288,15 @@ const INJECT_CODE = `
       return;
     }
 
-    const { activeModel, allConfigs, officialSortLabels, geminiWeeklyBucket, thirdPartyWeeklyBucket } = info;
+    const { activeModel, allConfigs, officialSortLabels, gemini5hBucket, geminiWeeklyBucket, thirdParty5hBucket, thirdPartyWeeklyBucket } = info;
     const activeLabelClean = cleanModelLabel(activeModel ? activeModel.label : info.triggerLabel);
-    const activeEffective = computeEffectiveQuota(activeModel, cachedQuotaSummary);
-    const activePct = activeEffective.pct;
-    const activeReset = formatTimeRemaining(activeEffective.resetTime || activeModel?.quotaInfo?.resetTime);
+    const activeDetailed = computeModelDetailedQuota(activeModel, cachedQuotaSummary);
+    const activeHourlyPct = activeDetailed.hourlyPct;
+    const activeWeeklyPct = activeDetailed.weeklyPct;
+    const activeHourlyReset = formatTimeRemaining(activeDetailed.hourlyReset);
+    const activeWeeklyReset = formatTimeRemaining(activeDetailed.weeklyReset);
 
-    // Identify if active model belongs to Gemini or 3P
-    const isGemini = /gemini|flash|pro|exp/i.test(activeLabelClean);
-    const activeWeekly = isGemini ? geminiWeeklyBucket : thirdPartyWeeklyBucket;
-    const activeWeeklyPct = activeWeekly ? Math.round((activeWeekly.remainingFraction ?? 1) * 100) : null;
-    const activeWeeklyReset = activeWeekly ? formatTimeRemaining(activeWeekly.resetTime) : null;
-
-    let activeColor = activePct > 60 ? '#10b981' : (activePct > 25 ? '#f59e0b' : '#ef4444');
+    let activeColor = activeHourlyPct > 60 ? '#10b981' : (activeHourlyPct > 25 ? '#f59e0b' : '#ef4444');
 
     let html = \`
       <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border, rgba(255,255,255,0.1));padding-bottom:10px;">
@@ -1300,15 +1317,21 @@ const INJECT_CODE = `
         <div style="font-size:12px;opacity:0.75;margin-bottom:4px;font-weight:500;">النموذج المحدد حالياً:</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;direction:ltr;">
           <span style="font-weight:700;font-size:14px;color:var(--foreground, currentColor);text-align:left;">\${activeLabelClean}</span>
-          <span style="font-weight:800;font-size:14px;color:\${activeColor};text-align:right;">\${activePct}%</span>
+          <span style="font-weight:800;font-size:14px;color:\${activeColor};text-align:right;">\${activeHourlyPct}%</span>
         </div>
         <div style="width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;margin-bottom:8px;direction:ltr;">
-          <div style="width:\${activePct}%;height:100%;background:\${activeColor};border-radius:4px;transition:width 0.3s ease;"></div>
+          <div style="width:\${activeHourlyPct}%;height:100%;background:\${activeColor};border-radius:4px;transition:width 0.3s ease;"></div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;opacity:0.85;">
-          \${activeReset ? \`<div style="display:flex;align-items:center;justify-content:space-between;"><span>⏱️ تجديد 5 ساعات:</span><span style="font-weight:700;">\${activeReset}</span></div>\` : ''}
-          \${activeWeeklyReset ? \`<div style="display:flex;align-items:center;justify-content:space-between;color:#38bdf8;"><span>📅 التجديد الأسبوعي (\${activeWeeklyPct}%):</span><span style="font-weight:700;">\${activeWeeklyReset}</span></div>\` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span>⏱️ حصة 5 ساعات (\${activeHourlyPct}%):</span>
+            <span style="font-weight:700;">\${activeHourlyReset || 'جاهز للتجديد'}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;color:#38bdf8;">
+            <span>📅 التجديد الأسبوعي (\${activeWeeklyPct}%):</span>
+            <span style="font-weight:700;">\${activeWeeklyReset || 'مكتمل'}</span>
+          </div>
         </div>
       </div>
 
@@ -1357,27 +1380,25 @@ const INJECT_CODE = `
 
     groupedConfigs.forEach(item => {
       const m = item.rawConfig;
-      const effectiveM = computeEffectiveQuota(m, cachedQuotaSummary);
-      const p = effectiveM.pct;
-      const col = p > 60 ? '#10b981' : (p > 25 ? '#f59e0b' : '#ef4444');
-      const reset = formatTimeRemaining(effectiveM.resetTime || m.quotaInfo?.resetTime);
-
-      const mIsGemini = /gemini/i.test(item.baseLabel);
-      const mWeekly = mIsGemini ? geminiWeeklyBucket : thirdPartyWeeklyBucket;
-      const mWeeklyReset = mWeekly ? formatTimeRemaining(mWeekly.resetTime) : null;
+      const detailedM = computeModelDetailedQuota(m, cachedQuotaSummary);
+      const hPct = detailedM.hourlyPct;
+      const wPct = detailedM.weeklyPct;
+      const col = hPct > 60 ? '#10b981' : (hPct > 25 ? '#f59e0b' : '#ef4444');
+      const hReset = formatTimeRemaining(detailedM.hourlyReset);
+      const wReset = formatTimeRemaining(detailedM.weeklyReset);
 
       html += \`
         <div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">
           <div style="display:flex;align-items:center;justify-content:space-between;direction:ltr;">
             <span style="font-size:13px;font-weight:600;text-align:left;">\${item.baseLabel}</span>
-            <span style="font-weight:800;font-size:12.5px;color:\${col};text-align:right;">\${p}%</span>
+            <span style="font-weight:800;font-size:12.5px;color:\${col};text-align:right;">\${hPct}%</span>
           </div>
           <div style="width:100%;height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;direction:ltr;">
-            <div style="width:\${p}%;height:100%;background:\${col};border-radius:3px;"></div>
+            <div style="width:\${hPct}%;height:100%;background:\${col};border-radius:3px;"></div>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:0.75;margin-top:2px;">
-            \${reset ? \`<span>⏱️ 5س: \${reset}</span>\` : '<span></span>'}
-            \${mWeeklyReset ? \`<span style="color:#38bdf8;font-weight:600;">📅 أسبوعي: \${mWeeklyReset}</span>\` : ''}
+            \${hReset ? \`<span>⏱️ 5س (\${hPct}%): \${hReset}</span>\` : \`<span>⏱️ 5س: \${hPct}%</span>\`}
+            \${wReset ? \`<span style="color:#38bdf8;font-weight:600;">📅 أسبوعي (\${wPct}%): \${wReset}</span>\` : \`<span style="color:#38bdf8;font-weight:600;">📅 أسبوعي: \${wPct}%</span>\`}
           </div>
         </div>
       \`;
