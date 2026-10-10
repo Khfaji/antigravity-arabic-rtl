@@ -403,6 +403,13 @@ const INJECT_CODE = `
   // --- Model Quota Widget Implementation ---
   let cachedUserStatus = null;
   let cachedQuotaSummary = null;
+  try {
+    const rawS = localStorage.getItem('__antigravity_cached_user_status');
+    if (rawS) cachedUserStatus = JSON.parse(rawS);
+    const rawQ = localStorage.getItem('__antigravity_cached_quota_summary');
+    if (rawQ) cachedQuotaSummary = JSON.parse(rawQ);
+  } catch (e) {}
+
   let lastFetchTime = 0;
   let isFetchingStatus = false;
 
@@ -436,9 +443,11 @@ const INJECT_CODE = `
 
       if (resStatus && resStatus.ok) {
         cachedUserStatus = await resStatus.json();
+        try { localStorage.setItem('__antigravity_cached_user_status', JSON.stringify(cachedUserStatus)); } catch (e) {}
       }
       if (resSummary && resSummary.ok) {
         cachedQuotaSummary = await resSummary.json();
+        try { localStorage.setItem('__antigravity_cached_quota_summary', JSON.stringify(cachedQuotaSummary)); } catch (e) {}
       }
 
       lastFetchTime = Date.now();
@@ -528,6 +537,9 @@ const INJECT_CODE = `
       if (!micBtn || !micBtn.parentElement) return;
 
       const info = getActiveModelAndQuota();
+      // Don't render a dummy widget before userStatus or activeModel is known
+      if (!info || !info.activeModel) return;
+
       let widget = document.getElementById('antigravity-model-quota-widget');
 
       if (!widget) {
