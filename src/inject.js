@@ -922,7 +922,7 @@ const INJECT_CODE = `
     ].join(';');
 
     const changelogItems = (updateInfo.changelog || [])
-      .map(item => \`<li style="margin-bottom:8px;display:flex;align-items:flex-start;gap:9px;"><span style="color:#38bdf8;font-size:12px;margin-top:2px;">✦</span><span style="font-size:13.5px;line-height:1.5;">\${item}</span></li>\`)
+      .map(item => \`<li style="margin-bottom:8px;display:flex;align-items:flex-start;gap:9px;"><span style="color:#38bdf8;flex-shrink:0;margin-top:4px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"></circle></svg></span><span style="font-size:13.5px;line-height:1.5;">\${item}</span></li>\`)
       .join('');
 
     modal.innerHTML = \`
@@ -975,8 +975,13 @@ const INJECT_CODE = `
         <!-- Live Progress Section (Hidden initially, shown during update) -->
         <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;">
-            <div style="display:flex;align-items:center;gap:7px;">
-              <span id="antigravity-progress-spinner" style="display:inline-block;animation:spin 1s linear infinite;">⏳</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="antigravity-progress-spinner" style="display:inline-flex;align-items:center;justify-content:center;color:#38bdf8;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;">
+                  <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                  <path d="M12 2a10 10 0 0 1 10 10"/>
+                </svg>
+              </span>
               <span id="antigravity-progress-status-text">جاري بدء التحديث...</span>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
@@ -985,8 +990,8 @@ const INJECT_CODE = `
             </div>
           </div>
 
-          <!-- Cloudflare-style Multi-Segment Fixed Progress Track -->
-          <div id="antigravity-segmented-track" style="width:100%;height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;display:flex;gap:2px;padding:1px;box-sizing:border-box;direction:ltr;">
+          <!-- Cloudflare-style Multi-Segment Fixed Progress Track (RTL Direction) -->
+          <div id="antigravity-segmented-track" style="width:100%;height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;display:flex;gap:2px;padding:1px;box-sizing:border-box;direction:rtl;">
             <!-- Segment 1: Connecting -->
             <div id="antigravity-seg-1" style="flex:1;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الاتصال بالخادم">
               <div class="seg-fill" style="width:0%;height:100%;background:#38bdf8;transition:width 0.25s ease;"></div>
@@ -1180,8 +1185,13 @@ const INJECT_CODE = `
         <!-- Live Progress Section (Hidden initially, shown if user triggers reinstall) -->
         <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;">
-            <div style="display:flex;align-items:center;gap:7px;">
-              <span id="antigravity-progress-spinner" style="display:inline-block;animation:spin 1s linear infinite;">⏳</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="antigravity-progress-spinner" style="display:inline-flex;align-items:center;justify-content:center;color:#38bdf8;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;">
+                  <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                  <path d="M12 2a10 10 0 0 1 10 10"/>
+                </svg>
+              </span>
               <span id="antigravity-progress-status-text">جاري إعادة التثبيت...</span>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
@@ -1190,8 +1200,8 @@ const INJECT_CODE = `
             </div>
           </div>
 
-          <!-- Cloudflare-style Multi-Segment Fixed Progress Track -->
-          <div id="antigravity-segmented-track" style="width:100%;height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;display:flex;gap:2px;padding:1px;box-sizing:border-box;direction:ltr;">
+          <!-- Cloudflare-style Multi-Segment Fixed Progress Track (RTL Direction) -->
+          <div id="antigravity-segmented-track" style="width:100%;height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;display:flex;gap:2px;padding:1px;box-sizing:border-box;direction:rtl;">
             <!-- Segment 1: Connecting -->
             <div id="antigravity-seg-1" style="flex:1;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الاتصال بالخادم">
               <div class="seg-fill" style="width:0%;height:100%;background:#38bdf8;transition:width 0.25s ease;"></div>
@@ -1305,7 +1315,7 @@ const INJECT_CODE = `
         const box = modal.querySelector('#antigravity-info-changelog-box ul');
         if (box && vData.changelog) {
           box.innerHTML = vData.changelog
-            .map(item => \`<li style="margin-bottom:8px;display:flex;align-items:flex-start;gap:9px;"><span style="color:#10b981;font-size:12px;margin-top:2px;">✦</span><span style="font-size:13.5px;line-height:1.5;">\${item}</span></li>\`)
+            .map(item => \`<li style="margin-bottom:8px;display:flex;align-items:flex-start;gap:9px;"><span style="color:#10b981;flex-shrink:0;margin-top:4px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"></circle></svg></span><span style="font-size:13.5px;line-height:1.5;">\${item}</span></li>\`)
             .join('');
         }
       }
@@ -1526,14 +1536,20 @@ const INJECT_CODE = `
       window.__antigravity_available_update = null;
       window.eval(cleanCode);
 
-      updateSegmentUI(4, 100, '🎉 اكتمل التحديث والتثبيت بنجاح!', 'تم تفعيل الإصدار ' + updateInfo.version + ' فورياً');
+      updateSegmentUI(4, 100, 'اكتمل التحديث والتثبيت بنجاح!', 'تم تفعيل الإصدار ' + updateInfo.version + ' فورياً');
       finishSegmentTiming(4, performance.now() - t4Start);
 
       // Apply dynamic Cloudflare time-proportional bar sizing
       recalculateSegmentProportions();
 
       if (percentEl) percentEl.innerText = '100%';
-      if (spinnerEl) spinnerEl.innerText = '✅';
+      if (spinnerEl) {
+        spinnerEl.innerHTML = \`
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        \`;
+      }
 
       // Actions after success
       if (actionsRow) {
@@ -1556,12 +1572,16 @@ const INJECT_CODE = `
         if (reinstallBtn) reinstallBtn.onclick = () => startInteractiveUpdate(modal, updateInfo);
       }
 
-      showUpdateToast('🎉 تم التحديث والتثبيت بنجاح إلى الإصدار ' + updateInfo.version + '!');
+      showUpdateToast('تم التحديث والتثبيت بنجاح إلى الإصدار ' + updateInfo.version, 'success');
       modal.removeAttribute('data-updating');
     } catch (err) {
       modal.removeAttribute('data-updating');
       const isCanceled = err.message.includes('إلغاء');
-      if (spinnerEl) spinnerEl.innerText = isCanceled ? '⚠️' : '❌';
+      if (spinnerEl) {
+        spinnerEl.innerHTML = isCanceled
+          ? \`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>\`
+          : \`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>\`;
+      }
 
       // Highlight active segment in error red
       const currentFill = modal.querySelector('#antigravity-segmented-track .seg-fill[style*="width: 0%"], #antigravity-segmented-track .seg-fill[style*="width: 100%"]');
@@ -1592,7 +1612,7 @@ const INJECT_CODE = `
         if (retryBtn) retryBtn.onclick = () => startInteractiveUpdate(modal, updateInfo);
       }
 
-      showUpdateToast(isCanceled ? '⚠️ تم إلغاء عملية التثبيت' : '❌ فشل التحديث: ' + err.message);
+      showUpdateToast(isCanceled ? 'تم إلغاء عملية التثبيت' : 'فشل التحديث: ' + err.message, isCanceled ? 'warning' : 'error');
     }
   }
 
@@ -1610,11 +1630,11 @@ const INJECT_CODE = `
       const cleanCode = window.eval(wrapped);
       window.__antigravity_available_update = null;
       window.eval(cleanCode);
-      showUpdateToast('⚡ تم تحديث Antigravity Arabic تلقائياً إلى ' + version);
+      showUpdateToast('تم تحديث Antigravity Arabic تلقائياً إلى الإصدار ' + version, 'info');
     } catch (e) {}
   }
 
-  function showUpdateToast(msg) {
+  function showUpdateToast(msg, type = 'info') {
     let toast = document.getElementById('antigravity-update-toast');
     if (toast) toast.remove();
 
@@ -1632,17 +1652,28 @@ const INJECT_CODE = `
       'box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5)',
       'border-radius: 9999px',
       'padding: 10px 22px',
-      'font-size: 13.5px',
+      'font-size: 13px',
       'font-weight: 600',
       'z-index: 100001',
       'display: flex',
       'align-items: center',
-      'gap: 8px',
+      'gap: 9px',
       'transition: opacity 0.3s ease',
       'pointer-events: none'
     ].join(';');
 
-    toast.innerText = msg;
+    let iconHtml = '';
+    if (type === 'success') {
+      iconHtml = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    } else if (type === 'warning') {
+      iconHtml = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+    } else if (type === 'error') {
+      iconHtml = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+    } else {
+      iconHtml = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+    }
+
+    toast.innerHTML = iconHtml + '<span>' + msg + '</span>';
     document.body.appendChild(toast);
 
     setTimeout(() => {
@@ -1754,7 +1785,9 @@ const INJECT_CODE = `
     let html = \`
       <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border, rgba(255,255,255,0.1));padding-bottom:10px;">
         <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px;">
-          <span style="font-size:16px;">⚡</span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
           <span>حصة النماذج (Model Quotas)</span>
         </div>
         <button id="antigravity-refresh-quota-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);cursor:pointer;color:currentColor;display:flex;align-items:center;padding:5px 9px;border-radius:6px;font-size:12px;font-weight:600;gap:6px;" title="تحديث الحصة الآن">
@@ -1786,13 +1819,27 @@ const INJECT_CODE = `
           </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:11.5px;opacity:0.85;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:11.5px;opacity:0.85;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span>⏱️ تجديد 5 ساعات:</span>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>تجديد 5 ساعات:</span>
+            </div>
             <span style="font-weight:700;">\${activeHourlyReset || 'جاهز للتجديد'}</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;color:#38bdf8;">
-            <span>📅 التجديد الأسبوعي:</span>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>التجديد الأسبوعي:</span>
+            </div>
             <span style="font-weight:700;">\${activeWeeklyReset || 'مكتمل'}</span>
           </div>
         </div>
@@ -1853,9 +1900,27 @@ const INJECT_CODE = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);gap:8px;">
           <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
             <span style="font-size:13px;font-weight:600;direction:ltr;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">\${item.baseLabel}</span>
-            <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;opacity:0.75;">
-              \${hReset ? \`<span>⏱️ \${hReset}</span>\` : ''}
-              \${wReset ? \`<span style="color:#38bdf8;">📅 \${wReset}</span>\` : ''}
+            <div style="display:flex;align-items:center;gap:10px;font-size:10.5px;opacity:0.75;">
+              \${hReset ? \`
+                <span style="display:flex;align-items:center;gap:4px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>\${hReset}</span>
+                </span>
+              \` : ''}
+              \${wReset ? \`
+                <span style="color:#38bdf8;display:flex;align-items:center;gap:4px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span>\${wReset}</span>
+                </span>
+              \` : ''}
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">

@@ -64,22 +64,45 @@ async function checkAndInjectLive() {
 
       for (const page of pages) {
         if (page.type !== 'page' || !page.webSocketDebuggerUrl) continue;
-        if (injectedPageIds.has(page.id)) continue;
 
         try {
           const ws = new WebSocket(page.webSocketDebuggerUrl);
           ws.onopen = () => {
             try {
+              // Check if our widget/capsule is currently alive in DOM
               ws.send(JSON.stringify({
                 id: 1,
                 method: 'Runtime.evaluate',
-                params: { expression: injectCode, returnByValue: true }
+                params: {
+                  expression: `!!(document.querySelector('#antigravity-model-quota-widget') || document.querySelector('#antigravity-update-capsule'))`,
+                  returnByValue: true
+                }
               }));
-              injectedPageIds.add(page.id);
             } catch (e) {}
           };
-          ws.onmessage = () => {
-            try { ws.close(); } catch (e) {}
+          ws.onmessage = (msg) => {
+            try {
+              const data = JSON.parse(msg.data || msg);
+              if (data.id === 1) {
+                const isAlive = data.result && data.result.result && data.result.result.value;
+                if (!isAlive) {
+                  // Not alive or freshly opened/refreshed, inject!
+                  ws.send(JSON.stringify({
+                    id: 2,
+                    method: 'Runtime.evaluate',
+                    params: { expression: injectCode, returnByValue: true }
+                  }));
+                  injectedPageIds.add(page.id);
+                } else {
+                  injectedPageIds.add(page.id);
+                  ws.close();
+                }
+              } else if (data.id === 2) {
+                ws.close();
+              }
+            } catch (e) {
+              try { ws.close(); } catch (err) {}
+            }
           };
           ws.onerror = () => {
             try { ws.close(); } catch (e) {}
