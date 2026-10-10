@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 <#
 .SYNOPSIS
     Antigravity Arabic Suite - Interactive Visual Terminal Setup
