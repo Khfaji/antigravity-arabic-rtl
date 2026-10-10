@@ -283,7 +283,10 @@ Write-Host "====================================================================
 Write-Host ""
 
 try {
-    [Console]::ReadKey($true) | Out-Null
+    $null = [Console]::ReadKey($true)
 } catch {
-    Read-Host "Press Enter to exit..."
+    $null = Read-Host "Press Enter to exit..."
 }
+
+# Force closing the terminal window immediately
+[System.Environment]::Exit(0)

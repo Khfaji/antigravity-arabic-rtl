@@ -18,13 +18,13 @@ rem Prefer Windows Terminal if available for crisp Arabic fonts and smooth ligat
 where wt.exe >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     if not defined WT_SESSION (
-        start "" wt.exe powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File "%TEMP_PS1%"
+        start "" wt.exe powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%TEMP_PS1%"
         exit /b 0
     )
 )
 
-rem Fallback to native PowerShell with -NoExit
-powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File "%TEMP_PS1%"
+rem Fallback to native PowerShell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%TEMP_PS1%"
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo Installation finished with exit code %ERRORLEVEL%.
