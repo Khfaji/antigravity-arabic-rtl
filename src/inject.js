@@ -576,20 +576,20 @@ const INJECT_CODE = `
         strokeColor = '#ef4444'; // Red
       }
 
-      const circumference = 59.7;
+      const circumference = 69.1; // 2 * PI * 11
       const strokeDash = (circumference * (pct / 100)).toFixed(1);
 
       const stateKey = displayLabel + '_' + pct;
       if (widget.getAttribute('data-state-key') !== stateKey) {
         widget.setAttribute('data-state-key', stateKey);
         widget.innerHTML = \`
-          <div style="position:relative;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background-color 0.15s ease;" class="hover:bg-secondary" title="\${displayLabel} (\${pct}% متبقي) - انقر للتحديث">
-            <svg width="24" height="24" viewBox="0 0 24 24" style="transform:rotate(-90deg);">
-              <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2.2" opacity="0.18"/>
-              <circle cx="12" cy="12" r="9.5" fill="none" stroke="\${strokeColor}" stroke-width="2.2" stroke-linecap="round"
+          <div style="position:relative;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background-color 0.15s ease;" class="hover:bg-secondary" title="\${displayLabel} (\${pct}% متبقي) - انقر للتحديث">
+            <svg width="28" height="28" viewBox="0 0 28 28" style="transform:rotate(-90deg);">
+              <circle cx="14" cy="14" r="11" fill="none" stroke="currentColor" stroke-width="2.5" opacity="0.18"/>
+              <circle cx="14" cy="14" r="11" fill="none" stroke="\${strokeColor}" stroke-width="2.5" stroke-linecap="round"
                       stroke-dasharray="\${strokeDash} \${circumference}" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;"/>
             </svg>
-            <span style="position:absolute;font-size:8.5px;font-weight:700;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:-0.5px;">\${pct}%</span>
+            <span style="position:absolute;font-size:10px;font-weight:800;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:-0.5px;">\${pct}%</span>
           </div>
         \`;
       }
@@ -619,22 +619,22 @@ const INJECT_CODE = `
         'position: fixed',
         'bottom: 85px',
         'right: 20px',
-        'width: 335px',
+        'width: 360px',
         'max-width: calc(100vw - 40px)',
-        'max-height: 520px',
+        'max-height: 540px',
         'background: var(--card, #1e1e2e)',
         'color: var(--foreground, #cdd6f4)',
-        'border: 1px solid var(--border, rgba(255,255,255,0.12))',
-        'border-radius: 12px',
-        'box-shadow: 0 12px 36px rgba(0,0,0,0.45)',
-        'padding: 12px',
+        'border: 1px solid var(--border, rgba(255,255,255,0.14))',
+        'border-radius: 14px',
+        'box-shadow: 0 16px 40px rgba(0,0,0,0.5)',
+        'padding: 14px',
         'font-family: system-ui, -apple-system, sans-serif',
-        'font-size: 12px',
+        'font-size: 13.5px',
         'z-index: 99999',
         'display: flex',
         'flex-direction: column',
-        'gap: 9px',
-        'backdrop-filter: blur(16px)',
+        'gap: 12px',
+        'backdrop-filter: blur(20px)',
         'overflow: hidden',
         'pointer-events: auto'
       ].join(';');
@@ -677,21 +677,26 @@ const INJECT_CODE = `
     }, 350);
   }
 
+  function cleanModelLabel(raw) {
+    if (!raw) return '';
+    return raw.replace(/\s*\((High|Medium|Low)\)/gi, '').trim();
+  }
+
   function fillPopoverContent(popover) {
     const info = getActiveModelAndQuota();
     if (!info) {
-      popover.innerHTML = '<div style="padding:10px;text-align:center;">جاري جلب بيانات الاستخدام والمودلات...</div>';
+      popover.innerHTML = '<div style="padding:14px;text-align:center;font-size:13.5px;">جاري جلب بيانات الاستخدام والمودلات...</div>';
       return;
     }
 
     const { activeModel, allConfigs, officialSortLabels, geminiWeeklyBucket, thirdPartyWeeklyBucket } = info;
-    const activeLabel = activeModel ? activeModel.label : info.triggerLabel;
+    const activeLabelClean = cleanModelLabel(activeModel ? activeModel.label : info.triggerLabel);
     const activeFraction = activeModel?.quotaInfo?.remainingFraction ?? 1;
     const activePct = Math.round(activeFraction * 100);
     const activeReset = formatTimeRemaining(activeModel?.quotaInfo?.resetTime);
 
     // Identify if active model belongs to Gemini or 3P
-    const isGemini = /gemini/i.test(activeLabel);
+    const isGemini = /gemini/i.test(activeLabelClean);
     const activeWeekly = isGemini ? geminiWeeklyBucket : thirdPartyWeeklyBucket;
     const activeWeeklyPct = activeWeekly ? Math.round((activeWeekly.remainingFraction ?? 1) * 100) : null;
     const activeWeeklyReset = activeWeekly ? formatTimeRemaining(activeWeekly.resetTime) : null;
@@ -699,12 +704,13 @@ const INJECT_CODE = `
     let activeColor = activePct > 60 ? '#10b981' : (activePct > 25 ? '#f59e0b' : '#ef4444');
 
     let html = \`
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border, rgba(255,255,255,0.08));padding-bottom:7px;">
-        <div style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;">
-          <span>⚡ حصة النماذج (Model Quotas)</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border, rgba(255,255,255,0.1));padding-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px;">
+          <span style="font-size:16px;">⚡</span>
+          <span>حصة النماذج (Model Quotas)</span>
         </div>
-        <button id="antigravity-refresh-quota-btn" style="background:transparent;border:none;cursor:pointer;color:currentColor;opacity:0.75;display:flex;align-items:center;padding:4px;border-radius:4px;font-size:11px;gap:4px;" title="تحديث الحصة الآن">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="antigravity-refresh-quota-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);cursor:pointer;color:currentColor;display:flex;align-items:center;padding:5px 9px;border-radius:6px;font-size:12px;font-weight:600;gap:6px;" title="تحديث الحصة الآن">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
           </svg>
           <span>تحديث</span>
@@ -712,68 +718,88 @@ const INJECT_CODE = `
       </div>
 
       <!-- Active Model Card -->
-      <div style="background:var(--secondary, rgba(255,255,255,0.06));border-radius:8px;padding:9px;border:1px solid rgba(255,255,255,0.08);">
-        <div style="font-size:11px;opacity:0.7;margin-bottom:2px;">المودل المحدد حالياً:</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-          <span style="font-weight:700;font-size:12.5px;color:var(--foreground, currentColor);">\${activeLabel}</span>
-          <span style="font-weight:700;color:\${activeColor};">\${activePct}%</span>
+      <div style="background:var(--secondary, rgba(255,255,255,0.08));border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.1);">
+        <div style="font-size:12px;opacity:0.75;margin-bottom:4px;font-weight:500;">النموذج المحدد حالياً:</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-weight:700;font-size:14px;color:var(--foreground, currentColor);">\${activeLabelClean}</span>
+          <span style="font-weight:800;font-size:14px;color:\${activeColor};">\${activePct}%</span>
         </div>
-        <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:6px;">
-          <div style="width:\${activePct}%;height:100%;background:\${activeColor};border-radius:3px;transition:width 0.3s ease;"></div>
+        <div style="width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;margin-bottom:8px;">
+          <div style="width:\${activePct}%;height:100%;background:\${activeColor};border-radius:4px;transition:width 0.3s ease;"></div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;opacity:0.75;">
-          \${activeReset ? \`<div style="display:flex;align-items:center;justify-content:space-between;"><span>⏱️ تجديد الـ 5 ساعات:</span><span style="font-weight:600;">\${activeReset}</span></div>\` : ''}
-          \${activeWeeklyReset ? \`<div style="display:flex;align-items:center;justify-content:space-between;color:#38bdf8;"><span>📅 التجديد الأسبوعي (\${activeWeeklyPct}%):</span><span style="font-weight:600;">\${activeWeeklyReset}</span></div>\` : ''}
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;opacity:0.85;">
+          \${activeReset ? \`<div style="display:flex;align-items:center;justify-content:space-between;"><span>⏱️ تجديد 5 ساعات:</span><span style="font-weight:700;">\${activeReset}</span></div>\` : ''}
+          \${activeWeeklyReset ? \`<div style="display:flex;align-items:center;justify-content:space-between;color:#38bdf8;"><span>📅 التجديد الأسبوعي (\${activeWeeklyPct}%):</span><span style="font-weight:700;">\${activeWeeklyReset}</span></div>\` : ''}
         </div>
       </div>
 
-      <!-- Other Models List (Ordered Exactly as Official List) -->
-      <div style="font-size:11px;font-weight:700;opacity:0.8;margin-top:2px;">بقية المودلات (الترتيب الأصلي):</div>
-      <div style="display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:220px;padding-left:2px;padding-right:2px;">
+      <!-- Other Models List (Grouped without Speed Redundancy) -->
+      <div style="font-size:12.5px;font-weight:700;opacity:0.85;margin-top:2px;">بقية المودلات:</div>
+      <div style="display:flex;flex-direction:column;gap:7px;overflow-y:auto;max-height:230px;padding-left:2px;padding-right:2px;">
     \`;
 
-    // Render other models using official order
-    const seen = new Set();
-    const otherConfigs = allConfigs.filter(c => {
-      if (!c || !c.label) return false;
-      if (c.label === activeLabel || (activeModel && c.modelId === activeModel.modelId)) return false;
-      if (seen.has(c.label)) return false;
-      seen.add(c.label);
-      return true;
+    // Filter and group models: eliminate repetitive speed duplicates for Gemini
+    const seenBaseNames = new Set();
+    // Exclude active base name so current model isn't duplicated below
+    seenBaseNames.add(activeLabelClean.toLowerCase());
+
+    const groupedConfigs = [];
+
+    // Order according to official sort labels base names
+    const orderedBaseNames = [];
+    officialSortLabels.forEach(raw => {
+      const base = cleanModelLabel(raw);
+      if (!orderedBaseNames.includes(base)) {
+        orderedBaseNames.push(base);
+      }
     });
 
-    // Sort by official list index, placing any unlisted models at the end
-    otherConfigs.sort((a, b) => {
-      let idxA = officialSortLabels.indexOf(a.label);
-      let idxB = officialSortLabels.indexOf(b.label);
+    allConfigs.forEach(c => {
+      if (!c || !c.label) return;
+      const base = cleanModelLabel(c.label);
+      const baseKey = base.toLowerCase();
+      if (seenBaseNames.has(baseKey)) return;
+
+      seenBaseNames.add(baseKey);
+      groupedConfigs.push({
+        baseLabel: base,
+        rawConfig: c
+      });
+    });
+
+    // Sort by official list base names
+    groupedConfigs.sort((a, b) => {
+      let idxA = orderedBaseNames.indexOf(a.baseLabel);
+      let idxB = orderedBaseNames.indexOf(b.baseLabel);
       if (idxA === -1) idxA = 999;
       if (idxB === -1) idxB = 999;
       return idxA - idxB;
     });
 
-    otherConfigs.forEach(m => {
+    groupedConfigs.forEach(item => {
+      const m = item.rawConfig;
       const f = m.quotaInfo?.remainingFraction ?? 1;
       const p = Math.round(f * 100);
       const col = p > 60 ? '#10b981' : (p > 25 ? '#f59e0b' : '#ef4444');
       const reset = formatTimeRemaining(m.quotaInfo?.resetTime);
 
-      const mIsGemini = /gemini/i.test(m.label);
+      const mIsGemini = /gemini/i.test(item.baseLabel);
       const mWeekly = mIsGemini ? geminiWeeklyBucket : thirdPartyWeeklyBucket;
       const mWeeklyReset = mWeekly ? formatTimeRemaining(mWeekly.resetTime) : null;
 
       html += \`
-        <div style="display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);">
+        <div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:11.5px;font-weight:500;">\${m.label}</span>
-            <span style="font-weight:700;font-size:11px;color:\${col};">\${p}%</span>
+            <span style="font-size:13px;font-weight:600;">\${item.baseLabel}</span>
+            <span style="font-weight:800;font-size:12.5px;color:\${col};">\${p}%</span>
           </div>
-          <div style="width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
-            <div style="width:\${p}%;height:100%;background:\${col};border-radius:2px;"></div>
+          <div style="width:100%;height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
+            <div style="width:\${p}%;height:100%;background:\${col};border-radius:3px;"></div>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;font-size:9.5px;opacity:0.6;margin-top:1px;">
-            \${reset ? \`<span>5س: \${reset}</span>\` : '<span></span>'}
-            \${mWeeklyReset ? \`<span style="color:#38bdf8;opacity:0.85;">أسبوعي: \${mWeeklyReset}</span>\` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:0.75;margin-top:2px;">
+            \${reset ? \`<span>⏱️ 5س: \${reset}</span>\` : '<span></span>'}
+            \${mWeeklyReset ? \`<span style="color:#38bdf8;font-weight:600;">📅 أسبوعي: \${mWeeklyReset}</span>\` : ''}
           </div>
         </div>
       \`;
