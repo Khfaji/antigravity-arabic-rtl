@@ -402,6 +402,7 @@ const INJECT_CODE = `
 
   // --- Model Quota Widget Implementation ---
   let cachedUserStatus = null;
+  let cachedQuotaSummary = null;
   let lastFetchTime = 0;
   let isFetchingStatus = false;
 
@@ -414,20 +415,34 @@ const INJECT_CODE = `
     isFetchingStatus = true;
     try {
       const csrf = window.__APP_CONFIG__?.csrfToken || '';
-      const res = await fetch('/exa.language_server_pb.LanguageServerService/GetUserStatus', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-codeium-csrf-token': csrf
-        },
-        body: JSON.stringify({})
-      });
-      if (res.ok) {
-        const data = await res.json();
-        cachedUserStatus = data;
-        lastFetchTime = Date.now();
-        renderModelQuotaWidget();
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-codeium-csrf-token': csrf
+      };
+
+      // Fetch both user status and quota summary concurrently
+      const [resStatus, resSummary] = await Promise.all([
+        fetch('/exa.language_server_pb.LanguageServerService/GetUserStatus', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({})
+        }).catch(() => null),
+        fetch('/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({})
+        }).catch(() => null)
+      ]);
+
+      if (resStatus && resStatus.ok) {
+        cachedUserStatus = await resStatus.json();
       }
+      if (resSummary && resSummary.ok) {
+        cachedQuotaSummary = await resSummary.json();
+      }
+
+      lastFetchTime = Date.now();
+      renderModelQuotaWidget();
     } catch (err) {
     } finally {
       isFetchingStatus = false;
@@ -436,7 +451,9 @@ const INJECT_CODE = `
 
   function getActiveModelAndQuota() {
     if (!cachedUserStatus) return null;
-    const configs = cachedUserStatus.userStatus?.cascadeModelConfigData?.clientModelConfigs || [];
+    const cascade = cachedUserStatus.userStatus?.cascadeModelConfigData || {};
+    const configs = cascade.clientModelConfigs || [];
+    const sorts = cascade.clientModelSorts || [];
     const trigger = document.querySelector('[data-testid="model-selector-trigger"]');
     const triggerRaw = trigger?.textContent || '';
     const triggerClean = triggerRaw.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -450,10 +467,34 @@ const INJECT_CODE = `
       activeModel = configs[0];
     }
 
+    // Determine the official sort order of model labels
+    let officialSortLabels = [];
+    if (sorts.length > 0 && sorts[0].groups && sorts[0].groups.length > 0) {
+      officialSortLabels = sorts[0].groups[0].modelLabels || [];
+    }
+
+    // Extract weekly quota details from cachedQuotaSummary
+    let geminiWeeklyBucket = null;
+    let thirdPartyWeeklyBucket = null;
+    const groups = cachedQuotaSummary?.response?.groups || [];
+    for (const g of groups) {
+      const gName = (g.displayName || '').toLowerCase();
+      const buckets = g.buckets || [];
+      const weekly = buckets.find(b => b.window === 'weekly' || (b.bucketId && b.bucketId.includes('weekly')));
+      if (gName.includes('gemini') && weekly) {
+        geminiWeeklyBucket = weekly;
+      } else if ((gName.includes('claude') || gName.includes('gpt') || gName.includes('3p')) && weekly) {
+        thirdPartyWeeklyBucket = weekly;
+      }
+    }
+
     return {
       activeModel,
       allConfigs: configs,
-      triggerLabel: triggerRaw.trim()
+      officialSortLabels,
+      triggerLabel: triggerRaw.trim(),
+      geminiWeeklyBucket,
+      thirdPartyWeeklyBucket
     };
   }
 
@@ -465,12 +506,17 @@ const INJECT_CODE = `
       const diffMs = resetTime - now;
       if (diffMs <= 0) return 'جاهز للتجديد الآن';
       const diffMins = Math.floor(diffMs / 60000);
-      const hours = Math.floor(diffMins / 60);
+      const days = Math.floor(diffMins / 1440);
+      const hours = Math.floor((diffMins % 1440) / 60);
       const mins = diffMins % 60;
-      if (hours > 0) {
-        return 'يتجدد بعد ' + hours + ' س و ' + mins + ' د';
+
+      if (days > 0) {
+        return days + ' يوم و ' + hours + ' س';
       }
-      return 'يتجدد بعد ' + mins + ' د';
+      if (hours > 0) {
+        return hours + ' س و ' + mins + ' د';
+      }
+      return mins + ' د';
     } catch (e) {
       return '';
     }
@@ -573,9 +619,9 @@ const INJECT_CODE = `
         'position: fixed',
         'bottom: 85px',
         'right: 20px',
-        'width: 320px',
+        'width: 335px',
         'max-width: calc(100vw - 40px)',
-        'max-height: 480px',
+        'max-height: 520px',
         'background: var(--card, #1e1e2e)',
         'color: var(--foreground, #cdd6f4)',
         'border: 1px solid var(--border, rgba(255,255,255,0.12))',
@@ -587,7 +633,7 @@ const INJECT_CODE = `
         'z-index: 99999',
         'display: flex',
         'flex-direction: column',
-        'gap: 10px',
+        'gap: 9px',
         'backdrop-filter: blur(16px)',
         'overflow: hidden',
         'pointer-events: auto'
@@ -638,16 +684,22 @@ const INJECT_CODE = `
       return;
     }
 
-    const { activeModel, allConfigs } = info;
+    const { activeModel, allConfigs, officialSortLabels, geminiWeeklyBucket, thirdPartyWeeklyBucket } = info;
     const activeLabel = activeModel ? activeModel.label : info.triggerLabel;
     const activeFraction = activeModel?.quotaInfo?.remainingFraction ?? 1;
     const activePct = Math.round(activeFraction * 100);
     const activeReset = formatTimeRemaining(activeModel?.quotaInfo?.resetTime);
 
+    // Identify if active model belongs to Gemini or 3P
+    const isGemini = /gemini/i.test(activeLabel);
+    const activeWeekly = isGemini ? geminiWeeklyBucket : thirdPartyWeeklyBucket;
+    const activeWeeklyPct = activeWeekly ? Math.round((activeWeekly.remainingFraction ?? 1) * 100) : null;
+    const activeWeeklyReset = activeWeekly ? formatTimeRemaining(activeWeekly.resetTime) : null;
+
     let activeColor = activePct > 60 ? '#10b981' : (activePct > 25 ? '#f59e0b' : '#ef4444');
 
     let html = \`
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border, rgba(255,255,255,0.08));padding-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border, rgba(255,255,255,0.08));padding-bottom:7px;">
         <div style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;">
           <span>⚡ حصة النماذج (Model Quotas)</span>
         </div>
@@ -662,38 +714,53 @@ const INJECT_CODE = `
       <!-- Active Model Card -->
       <div style="background:var(--secondary, rgba(255,255,255,0.06));border-radius:8px;padding:9px;border:1px solid rgba(255,255,255,0.08);">
         <div style="font-size:11px;opacity:0.7;margin-bottom:2px;">المودل المحدد حالياً:</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
           <span style="font-weight:700;font-size:12.5px;color:var(--foreground, currentColor);">\${activeLabel}</span>
           <span style="font-weight:700;color:\${activeColor};">\${activePct}%</span>
         </div>
-        <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:4px;">
+        <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:6px;">
           <div style="width:\${activePct}%;height:100%;background:\${activeColor};border-radius:3px;transition:width 0.3s ease;"></div>
         </div>
-        \${activeReset ? \`<div style="font-size:10.5px;opacity:0.65;display:flex;align-items:center;gap:4px;">⏱️ \${activeReset}</div>\` : ''}
+
+        <div style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;opacity:0.75;">
+          \${activeReset ? \`<div style="display:flex;align-items:center;justify-content:space-between;"><span>⏱️ تجديد الـ 5 ساعات:</span><span style="font-weight:600;">\${activeReset}</span></div>\` : ''}
+          \${activeWeeklyReset ? \`<div style="display:flex;align-items:center;justify-content:space-between;color:#38bdf8;"><span>📅 التجديد الأسبوعي (\${activeWeeklyPct}%):</span><span style="font-weight:600;">\${activeWeeklyReset}</span></div>\` : ''}
+        </div>
       </div>
 
-      <!-- Other Models List -->
-      <div style="font-size:11px;font-weight:700;opacity:0.8;margin-top:2px;">بقية المودلات المتاحة:</div>
+      <!-- Other Models List (Ordered Exactly as Official List) -->
+      <div style="font-size:11px;font-weight:700;opacity:0.8;margin-top:2px;">بقية المودلات (الترتيب الأصلي):</div>
       <div style="display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:220px;padding-left:2px;padding-right:2px;">
     \`;
 
-    // Render other models with fixed, deterministic sorting to prevent jumping
+    // Render other models using official order
     const seen = new Set();
-    const others = allConfigs
-      .filter(c => {
-        if (!c || !c.label) return false;
-        if (c.label === activeLabel || (activeModel && c.modelId === activeModel.modelId)) return false;
-        if (seen.has(c.label)) return false;
-        seen.add(c.label);
-        return true;
-      })
-      .sort((a, b) => a.label.localeCompare(b.label));
+    const otherConfigs = allConfigs.filter(c => {
+      if (!c || !c.label) return false;
+      if (c.label === activeLabel || (activeModel && c.modelId === activeModel.modelId)) return false;
+      if (seen.has(c.label)) return false;
+      seen.add(c.label);
+      return true;
+    });
 
-    others.forEach(m => {
+    // Sort by official list index, placing any unlisted models at the end
+    otherConfigs.sort((a, b) => {
+      let idxA = officialSortLabels.indexOf(a.label);
+      let idxB = officialSortLabels.indexOf(b.label);
+      if (idxA === -1) idxA = 999;
+      if (idxB === -1) idxB = 999;
+      return idxA - idxB;
+    });
+
+    otherConfigs.forEach(m => {
       const f = m.quotaInfo?.remainingFraction ?? 1;
       const p = Math.round(f * 100);
       const col = p > 60 ? '#10b981' : (p > 25 ? '#f59e0b' : '#ef4444');
       const reset = formatTimeRemaining(m.quotaInfo?.resetTime);
+
+      const mIsGemini = /gemini/i.test(m.label);
+      const mWeekly = mIsGemini ? geminiWeeklyBucket : thirdPartyWeeklyBucket;
+      const mWeeklyReset = mWeekly ? formatTimeRemaining(mWeekly.resetTime) : null;
 
       html += \`
         <div style="display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);">
@@ -704,7 +771,10 @@ const INJECT_CODE = `
           <div style="width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
             <div style="width:\${p}%;height:100%;background:\${col};border-radius:2px;"></div>
           </div>
-          \${reset ? \`<div style="font-size:9.5px;opacity:0.55;">\${reset}</div>\` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:9.5px;opacity:0.6;margin-top:1px;">
+            \${reset ? \`<span>5س: \${reset}</span>\` : '<span></span>'}
+            \${mWeeklyReset ? \`<span style="color:#38bdf8;opacity:0.85;">أسبوعي: \${mWeeklyReset}</span>\` : ''}
+          </div>
         </div>
       \`;
     });
