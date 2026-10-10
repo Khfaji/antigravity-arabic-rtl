@@ -691,7 +691,7 @@ const INJECT_CODE = `
   }
 
   // --- Update Notification & Self-Updater System ---
-  const CURRENT_VERSION = '1.3.0';
+  const CURRENT_VERSION = '1.4.0';
 
   async function checkForUpdates() {
     try {
@@ -1117,6 +1117,7 @@ const INJECT_CODE = `
       // Evaluate safely inside CommonJS module sandbox
       const wrapped = '(function() { var module = { exports: {} }; var exports = module.exports; ' + rawCode + '; return module.exports.INJECT_CODE; })()';
       const cleanCode = window.eval(wrapped);
+      window.__antigravity_available_update = null;
       window.eval(cleanCode);
 
       showUpdateToast('🎉 تم التحديث بنجاح إلى الإصدار ' + version + '!');
@@ -1133,6 +1134,7 @@ const INJECT_CODE = `
       removeUpdateCapsule();
       const wrapped = '(function() { var module = { exports: {} }; var exports = module.exports; ' + rawCode + '; return module.exports.INJECT_CODE; })()';
       const cleanCode = window.eval(wrapped);
+      window.__antigravity_available_update = null;
       window.eval(cleanCode);
       showUpdateToast('⚡ تم تحديث Antigravity Arabic تلقائياً إلى ' + version);
     } catch (e) {}
