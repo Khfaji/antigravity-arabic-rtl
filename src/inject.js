@@ -973,22 +973,72 @@ const INJECT_CODE = `
         </label>
 
         <!-- Live Progress Section (Hidden initially, shown during update) -->
-        <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;">
+        <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;">
             <div style="display:flex;align-items:center;gap:7px;">
               <span id="antigravity-progress-spinner" style="display:inline-block;animation:spin 1s linear infinite;">⏳</span>
               <span id="antigravity-progress-status-text">جاري بدء التحديث...</span>
             </div>
-            <span id="antigravity-progress-percent" style="color:#38bdf8;font-weight:700;">0%</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="antigravity-progress-total-time" style="font-size:11.5px;opacity:0.65;font-family:monospace;"></span>
+              <span id="antigravity-progress-percent" style="color:#38bdf8;font-weight:700;">0%</span>
+            </div>
           </div>
 
-          <!-- Progress Track -->
-          <div style="width:100%;height:8px;background:rgba(255,255,255,0.08);border-radius:9999px;overflow:hidden;direction:ltr;">
-            <div id="antigravity-progress-bar-fill" style="width:0%;height:100%;background:linear-gradient(90deg, #0284c7, #38bdf8);border-radius:9999px;transition:width 0.28s ease, background 0.3s ease;"></div>
+          <!-- Cloudflare-style Multi-Segment Fixed Progress Track -->
+          <div id="antigravity-segmented-track" style="width:100%;height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;display:flex;gap:2px;padding:1px;box-sizing:border-box;direction:ltr;">
+            <!-- Segment 1: Connecting -->
+            <div id="antigravity-seg-1" style="flex:1;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الاتصال بالخادم">
+              <div class="seg-fill" style="width:0%;height:100%;background:#38bdf8;transition:width 0.25s ease;"></div>
+            </div>
+            <!-- Segment 2: Downloading -->
+            <div id="antigravity-seg-2" style="flex:2;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="تنزيل الملفات">
+              <div class="seg-fill" style="width:0%;height:100%;background:#818cf8;transition:width 0.25s ease;"></div>
+            </div>
+            <!-- Segment 3: Compiling & Sandbox -->
+            <div id="antigravity-seg-3" style="flex:1.2;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="تجهيز الحزمة">
+              <div class="seg-fill" style="width:0%;height:100%;background:#c084fc;transition:width 0.25s ease;"></div>
+            </div>
+            <!-- Segment 4: Live Injection -->
+            <div id="antigravity-seg-4" style="flex:1;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الحقن الفوري المباشر">
+              <div class="seg-fill" style="width:0%;height:100%;background:#34d399;transition:width 0.25s ease;"></div>
+            </div>
+          </div>
+
+          <!-- Segments Timing & Stage Breakdown (Cloudflare Deployment Style) -->
+          <div id="antigravity-segments-legend" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;direction:rtl;margin-top:2px;">
+            <div id="antigravity-legend-1" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></span>
+                <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">الاتصال</span>
+              </div>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+            </div>
+            <div id="antigravity-legend-2" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#818cf8;flex-shrink:0;"></span>
+                <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">التنزيل</span>
+              </div>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+            </div>
+            <div id="antigravity-legend-3" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#c084fc;flex-shrink:0;"></span>
+                <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">التثبيت</span>
+              </div>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+            </div>
+            <div id="antigravity-legend-4" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#34d399;flex-shrink:0;"></span>
+                <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">الحقن</span>
+              </div>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+            </div>
           </div>
 
           <!-- Detailed Status Step -->
-          <div id="antigravity-progress-step-desc" style="font-size:11.5px;opacity:0.75;display:flex;align-items:center;justify-content:space-between;">
+          <div id="antigravity-progress-step-desc" style="font-size:11.5px;opacity:0.8;display:flex;align-items:center;justify-content:space-between;padding-top:2px;">
             <span>العملية: فحص الاتصال بالخادم</span>
             <span id="antigravity-progress-bytes">0 / 0 KB</span>
           </div>
@@ -1128,18 +1178,72 @@ const INJECT_CODE = `
         </label>
 
         <!-- Live Progress Section (Hidden initially, shown if user triggers reinstall) -->
-        <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;">
+        <div id="antigravity-modal-progress-section" style="display:none;flex-direction:column;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;">
             <div style="display:flex;align-items:center;gap:7px;">
               <span id="antigravity-progress-spinner" style="display:inline-block;animation:spin 1s linear infinite;">⏳</span>
               <span id="antigravity-progress-status-text">جاري إعادة التثبيت...</span>
             </div>
-            <span id="antigravity-progress-percent" style="color:#38bdf8;font-weight:700;">0%</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="antigravity-progress-total-time" style="font-size:11.5px;opacity:0.65;font-family:monospace;"></span>
+              <span id="antigravity-progress-percent" style="color:#38bdf8;font-weight:700;">0%</span>
+            </div>
           </div>
-          <div style="width:100%;height:8px;background:rgba(255,255,255,0.08);border-radius:9999px;overflow:hidden;direction:ltr;">
-            <div id="antigravity-progress-bar-fill" style="width:0%;height:100%;background:linear-gradient(90deg, #0284c7, #38bdf8);border-radius:9999px;transition:width 0.28s ease, background 0.3s ease;"></div>
+
+          <!-- Cloudflare-style Multi-Segment Fixed Progress Track -->
+          <div id="antigravity-segmented-track" style="width:100%;height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;display:flex;gap:2px;padding:1px;box-sizing:border-box;direction:ltr;">
+            <!-- Segment 1: Connecting -->
+            <div id="antigravity-seg-1" style="flex:1;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الاتصال بالخادم">
+              <div class="seg-fill" style="width:0%;height:100%;background:#38bdf8;transition:width 0.25s ease;"></div>
+            </div>
+            <!-- Segment 2: Downloading -->
+            <div id="antigravity-seg-2" style="flex:2;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="تنزيل الملفات">
+              <div class="seg-fill" style="width:0%;height:100%;background:#818cf8;transition:width 0.25s ease;"></div>
+            </div>
+            <!-- Segment 3: Compiling & Sandbox -->
+            <div id="antigravity-seg-3" style="flex:1.2;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="تجهيز الحزمة">
+              <div class="seg-fill" style="width:0%;height:100%;background:#c084fc;transition:width 0.25s ease;"></div>
+            </div>
+            <!-- Segment 4: Live Injection -->
+            <div id="antigravity-seg-4" style="flex:1;height:100%;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;position:relative;transition:flex 0.4s ease;" title="الحقن الفوري المباشر">
+              <div class="seg-fill" style="width:0%;height:100%;background:#34d399;transition:width 0.25s ease;"></div>
+            </div>
           </div>
-          <div id="antigravity-progress-step-desc" style="font-size:11.5px;opacity:0.75;display:flex;align-items:center;justify-content:space-between;">
+
+          <!-- Segments Timing & Stage Breakdown (Cloudflare Deployment Style) -->
+          <div id="antigravity-segments-legend" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;direction:rtl;margin-top:2px;">
+            <div id="antigravity-legend-1" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></span>
+                <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">الاتصال</span>
+              </div>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+            </div>
+            <div id="antigravity-legend-2" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#818cf8;flex-shrink:0;"></span>
+                <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">التنزيل</span>
+              </div>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+            </div>
+            <div id="antigravity-legend-3" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#c084fc;flex-shrink:0;"></span>
+                <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">التثبيت</span>
+              </div>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+            </div>
+            <div id="antigravity-legend-4" style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#34d399;flex-shrink:0;"></span>
+                <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">الحقن</span>
+              </div>
+              <span class="legend-time" style="color:#94a3b8;font-family:monospace;font-size:10px;">--</span>
+            </div>
+          </div>
+
+          <!-- Detailed Status Step -->
+          <div id="antigravity-progress-step-desc" style="font-size:11.5px;opacity:0.8;display:flex;align-items:center;justify-content:space-between;padding-top:2px;">
             <span>العملية: فحص الاتصال بالخادم</span>
             <span id="antigravity-progress-bytes">0 / 0 KB</span>
           </div>
@@ -1213,12 +1317,12 @@ const INJECT_CODE = `
     const progressSection = modal.querySelector('#antigravity-modal-progress-section');
     const autoUpdateRow = modal.querySelector('#antigravity-modal-autoupdate-row');
     const actionsRow = modal.querySelector('#antigravity-modal-actions-row');
-    const fillBar = modal.querySelector('#antigravity-progress-bar-fill');
     const percentEl = modal.querySelector('#antigravity-progress-percent');
     const statusTextEl = modal.querySelector('#antigravity-progress-status-text');
     const stepDescEl = modal.querySelector('#antigravity-progress-step-desc');
     const bytesEl = modal.querySelector('#antigravity-progress-bytes');
     const spinnerEl = modal.querySelector('#antigravity-progress-spinner');
+    const totalTimeEl = modal.querySelector('#antigravity-progress-total-time');
 
     // UI state: Updating
     modal.setAttribute('data-updating', 'true');
@@ -1249,33 +1353,137 @@ const INJECT_CODE = `
       };
     }
 
-    const setProgress = (pct, title, step, bytesText = '', isError = false) => {
-      if (fillBar) {
-        fillBar.style.width = pct + '%';
-        if (isError) {
-          fillBar.style.background = '#ef4444';
-        } else if (pct === 100) {
-          fillBar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+    // Time tracking per segment
+    const timings = {
+      seg1: 0,
+      seg2: 0,
+      seg3: 0,
+      seg4: 0
+    };
+    const overallStartTime = performance.now();
+
+    const updateSegmentUI = (activeStepIdx, stepPct, title, stepDesc, bytesText = '') => {
+      // Step indices: 1 = Connecting, 2 = Downloading, 3 = Compiling, 4 = Injected
+      const segColors = ['#38bdf8', '#818cf8', '#c084fc', '#34d399'];
+      for (let i = 1; i <= 4; i++) {
+        const segEl = modal.querySelector('#antigravity-seg-' + i + ' .seg-fill');
+        const legendEl = modal.querySelector('#antigravity-legend-' + i);
+        if (!segEl) continue;
+
+        if (i < activeStepIdx) {
+          // Completed step
+          segEl.style.width = '100%';
+          segEl.style.background = segColors[i - 1];
+          if (legendEl) {
+            legendEl.style.borderColor = 'rgba(255,255,255,0.14)';
+            legendEl.style.background = 'rgba(255,255,255,0.05)';
+          }
+        } else if (i === activeStepIdx) {
+          // Active step
+          segEl.style.width = Math.min(100, Math.max(0, stepPct)) + '%';
+          segEl.style.background = segColors[i - 1];
+          if (legendEl) {
+            legendEl.style.borderColor = segColors[i - 1];
+            legendEl.style.background = 'rgba(255,255,255,0.08)';
+          }
         } else {
-          fillBar.style.background = 'linear-gradient(90deg, #0284c7, #38bdf8)';
+          // Future step
+          segEl.style.width = '0%';
+          if (legendEl) {
+            legendEl.style.borderColor = 'rgba(255,255,255,0.04)';
+            legendEl.style.background = 'rgba(255,255,255,0.02)';
+          }
         }
       }
-      if (percentEl) percentEl.innerText = pct + '%';
+
+      // Calculate total overall percentage based on fixed segment weights (15%, 50%, 20%, 15%)
+      const weights = [0.15, 0.50, 0.20, 0.15];
+      let overallPct = 0;
+      for (let i = 1; i < activeStepIdx; i++) {
+        overallPct += weights[i - 1] * 100;
+      }
+      if (activeStepIdx <= 4) {
+        overallPct += weights[activeStepIdx - 1] * stepPct;
+      }
+      const roundedOverall = Math.min(100, Math.round(overallPct));
+
+      if (percentEl) percentEl.innerText = roundedOverall + '%';
       if (statusTextEl) statusTextEl.innerText = title;
       if (stepDescEl) {
-        stepDescEl.querySelector('span:first-child').innerText = 'المرحلة: ' + step;
+        stepDescEl.querySelector('span:first-child').innerText = 'المرحلة: ' + stepDesc;
       }
       if (bytesEl) bytesEl.innerText = bytesText;
     };
 
-    try {
-      // Step 1: Connecting (10%)
-      setProgress(10, 'جاري الاتصال بالخادم...', 'فحص جاهزية الخادم وحزم التحديث');
-      await new Promise(r => setTimeout(r, 220));
-      if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
+    const finishSegmentTiming = (segIdx, durationMs) => {
+      timings['seg' + segIdx] = Math.max(1, Math.round(durationMs));
+      const legendEl = modal.querySelector('#antigravity-legend-' + segIdx + ' .legend-time');
+      if (legendEl) {
+        legendEl.innerText = (durationMs >= 1000 ? (durationMs / 1000).toFixed(2) + 's' : Math.round(durationMs) + 'ms');
+      }
+    };
 
-      // Step 2: Downloading stream / progress (10% -> 60%)
-      setProgress(25, 'جاري تنزيل ملف التحديث...', 'تنزيل src/inject.js عبر الاتصال المشفر', '0 / ~65 KB');
+    // Recalculate segment flex-ratios after completion to reflect exact elapsed time proportion (Cloudflare Style!)
+    const recalculateSegmentProportions = () => {
+      const t1 = timings.seg1 || 100;
+      const t2 = timings.seg2 || 300;
+      const t3 = timings.seg3 || 150;
+      const t4 = timings.seg4 || 100;
+      const total = t1 + t2 + t3 + t4;
+
+      // Minimum flex weight 0.5 so tiny segments don't vanish completely
+      const f1 = Math.max(0.6, (t1 / total) * 4).toFixed(2);
+      const f2 = Math.max(0.8, (t2 / total) * 4).toFixed(2);
+      const f3 = Math.max(0.6, (t3 / total) * 4).toFixed(2);
+      const f4 = Math.max(0.6, (t4 / total) * 4).toFixed(2);
+
+      const s1 = modal.querySelector('#antigravity-seg-1');
+      const s2 = modal.querySelector('#antigravity-seg-2');
+      const s3 = modal.querySelector('#antigravity-seg-3');
+      const s4 = modal.querySelector('#antigravity-seg-4');
+
+      if (s1) {
+        s1.style.flex = f1;
+        const pct1 = Math.round((t1 / total) * 100);
+        const l1 = modal.querySelector('#antigravity-legend-1 .legend-time');
+        if (l1) l1.innerText = (t1 >= 1000 ? (t1/1000).toFixed(2)+'s' : t1+'ms') + ' (' + pct1 + '%)';
+      }
+      if (s2) {
+        s2.style.flex = f2;
+        const pct2 = Math.round((t2 / total) * 100);
+        const l2 = modal.querySelector('#antigravity-legend-2 .legend-time');
+        if (l2) l2.innerText = (t2 >= 1000 ? (t2/1000).toFixed(2)+'s' : t2+'ms') + ' (' + pct2 + '%)';
+      }
+      if (s3) {
+        s3.style.flex = f3;
+        const pct3 = Math.round((t3 / total) * 100);
+        const l3 = modal.querySelector('#antigravity-legend-3 .legend-time');
+        if (l3) l3.innerText = (t3 >= 1000 ? (t3/1000).toFixed(2)+'s' : t3+'ms') + ' (' + pct3 + '%)';
+      }
+      if (s4) {
+        s4.style.flex = f4;
+        const pct4 = Math.round((t4 / total) * 100);
+        const l4 = modal.querySelector('#antigravity-legend-4 .legend-time');
+        if (l4) l4.innerText = (t4 >= 1000 ? (t4/1000).toFixed(2)+'s' : t4+'ms') + ' (' + pct4 + '%)';
+      }
+
+      if (totalTimeEl) {
+        totalTimeEl.innerText = 'الوقت الكلي: ' + (total >= 1000 ? (total / 1000).toFixed(2) + ' ث' : total + ' م.ث');
+      }
+    };
+
+    try {
+      // Step 1: Connecting (Segment 1)
+      const t1Start = performance.now();
+      updateSegmentUI(1, 40, 'جاري الاتصال بالخادم...', 'فحص جاهزية الخادم وحزم التحديث');
+      await new Promise(r => setTimeout(r, 180));
+      if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
+      updateSegmentUI(1, 100, 'تم التحقق من الاتصال', 'الخادم جاهز لنقل الحزمة');
+      finishSegmentTiming(1, performance.now() - t1Start);
+
+      // Step 2: Downloading (Segment 2)
+      const t2Start = performance.now();
+      updateSegmentUI(2, 20, 'جاري تنزيل ملف التحديث...', 'بدء تنزيل حزمة الكود من GitHub', '0 / ~65 KB');
       const fetchUrl = 'https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main/src/inject.js?t=' + Date.now();
       const res = await fetch(fetchUrl, {
         cache: 'no-store',
@@ -1283,23 +1491,28 @@ const INJECT_CODE = `
       });
       if (!res.ok) throw new Error('فشل جلب ملف التحديث من المستودع (' + res.status + ')');
 
-      setProgress(45, 'جاري استلام حزم البيانات...', 'تحميل محتوى الأداة من GitHub', '35 / ~65 KB');
+      updateSegmentUI(2, 60, 'جاري استلام حزم البيانات...', 'تحميل محتوى الأداة', '35 / ~65 KB');
       const rawCode = await res.text();
       const totalKb = (new Blob([rawCode]).size / 1024).toFixed(1);
-      setProgress(65, 'اكتمل التنزيل بنجاح', 'التحقق من سلامة الكود وحزمة الـ Suite', totalKb + ' / ' + totalKb + ' KB');
-      await new Promise(r => setTimeout(r, 250));
+      updateSegmentUI(2, 100, 'اكتمل التنزيل بنجاح', 'تم استلام كامل الحزمة البرمجية', totalKb + ' / ' + totalKb + ' KB');
+      finishSegmentTiming(2, performance.now() - t2Start);
       if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
 
-      // Step 3: Compiling & Sandbox Extraction (65% -> 85%)
-      setProgress(80, 'جاري تجهيز وتثبيت الحزمة...', 'تحليل وتجميع الكود في بيئة الحماية CommonJS');
-      await new Promise(r => setTimeout(r, 200));
+      // Step 3: Compiling & Sandbox Extraction (Segment 3)
+      const t3Start = performance.now();
+      updateSegmentUI(3, 40, 'جاري تجهيز وتثبيت الحزمة...', 'تحليل وتجميع الكود في بيئة الحماية CommonJS');
+      await new Promise(r => setTimeout(r, 150));
       const wrapped = '(function() { var module = { exports: {} }; var exports = module.exports; ' + rawCode + '; return module.exports.INJECT_CODE; })()';
       const cleanCode = window.eval(wrapped);
       if (!cleanCode) throw new Error('فشل تجميع ملف الحقن البرمجي');
+      updateSegmentUI(3, 100, 'تم تجهيز الحزمة', 'الكود مفحوص وجاهز للحقن الفوري');
+      finishSegmentTiming(3, performance.now() - t3Start);
+      if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
 
-      // Step 4: Live Injection (85% -> 100%)
-      setProgress(95, 'جاري الحقن الفوري المباشر...', 'تنظيف الواجهة السابقة وحقن المحرك الجديد في الذاكرة');
-      await new Promise(r => setTimeout(r, 260));
+      // Step 4: Live Injection (Segment 4)
+      const t4Start = performance.now();
+      updateSegmentUI(4, 50, 'جاري الحقن الفوري المباشر...', 'تنظيف الواجهة السابقة وحقن المحرك الجديد في الذاكرة');
+      await new Promise(r => setTimeout(r, 160));
       if (abortController.signal.aborted) throw new Error('تم إلغاء التثبيت بواسطة المستخدم');
 
       // Clean old UI
@@ -1313,7 +1526,13 @@ const INJECT_CODE = `
       window.__antigravity_available_update = null;
       window.eval(cleanCode);
 
-      setProgress(100, '🎉 اكتمل التحديث والتثبيت بنجاح!', 'تم تفعيل الإصدار ' + updateInfo.version + ' فورياً');
+      updateSegmentUI(4, 100, '🎉 اكتمل التحديث والتثبيت بنجاح!', 'تم تفعيل الإصدار ' + updateInfo.version + ' فورياً');
+      finishSegmentTiming(4, performance.now() - t4Start);
+
+      // Apply dynamic Cloudflare time-proportional bar sizing
+      recalculateSegmentProportions();
+
+      if (percentEl) percentEl.innerText = '100%';
       if (spinnerEl) spinnerEl.innerText = '✅';
 
       // Actions after success
@@ -1343,7 +1562,15 @@ const INJECT_CODE = `
       modal.removeAttribute('data-updating');
       const isCanceled = err.message.includes('إلغاء');
       if (spinnerEl) spinnerEl.innerText = isCanceled ? '⚠️' : '❌';
-      setProgress(0, isCanceled ? 'تم إلغاء التثبيت' : 'فشل التثبيت', isCanceled ? 'تم إيقاف العملية واسترجاع الحالة الأصلية' : err.message, '', true);
+
+      // Highlight active segment in error red
+      const currentFill = modal.querySelector('#antigravity-segmented-track .seg-fill[style*="width: 0%"], #antigravity-segmented-track .seg-fill[style*="width: 100%"]');
+      if (currentFill) currentFill.style.background = '#ef4444';
+
+      if (statusTextEl) statusTextEl.innerText = isCanceled ? 'تم إلغاء التثبيت' : 'فشل التثبيت';
+      if (stepDescEl) {
+        stepDescEl.querySelector('span:first-child').innerText = 'المرحلة: ' + (isCanceled ? 'تم إيقاف العملية واسترجاع الحالة الأصلية' : err.message);
+      }
 
       if (actionsRow) {
         actionsRow.innerHTML = \`
