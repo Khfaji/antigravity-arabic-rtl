@@ -3,35 +3,22 @@
 .SYNOPSIS
     Antigravity Arabic Suite - Interactive Visual Terminal Setup
 .DESCRIPTION
-    Installs the complete Arabic & RTL engine, AI instructions, background watcher daemon,
+    Installs the complete Arabic and RTL engine, AI instructions, background watcher daemon,
     and immediately injects live into running Antigravity instances with interactive progress stages.
 #>
 
-# Force Windows Terminal relaunch if running in legacy conhost
-if (-not $env:WT_SESSION) {
-    $wtCmd = Get-Command wt.exe -ErrorAction SilentlyContinue
-    if ($wtCmd) {
-        Start-Process "wt.exe" -ArgumentList "powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File `"$PSCommandPath`""
-        exit 0
-    }
-}
+$ErrorActionPreference = "Stop"
 
 # Force standard UTF-8 for Output and Input streams
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
 $OutputEncoding           = [System.Text.Encoding]::UTF8
 
-# Try setting active console code page and ensure true font supports Unicode
-try {
-    & chcp 65001 >$null 2>&1
-    Set-ItemProperty -Path "HKCU:\Console" -Name "CodePage" -Value 65001 -Type DWord -ErrorAction SilentlyContinue
-} catch {}
-
 Clear-Host
 Write-Host ""
 Write-Host "==========================================================================" -ForegroundColor Cyan
 Write-Host "         Antigravity Arabic Suite - Modern Pipeline Installer            " -ForegroundColor White
-Write-Host "         محرك التعريب والـ RTL الشامل لمنظومة Google Antigravity         " -ForegroundColor Cyan
+Write-Host "         Arabic and RTL Engine Setup for Google Antigravity              " -ForegroundColor Cyan
 Write-Host "==========================================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -40,7 +27,7 @@ $Script:Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 $Script:StageTimers = @{}
 
 function Render-PipelineBar([int]$currentStage, [int]$totalStages, [string]$statusText, [int]$pct) {
-    $width = 36
+    $width = 34
     $filledChars = [Math]::Max(0, [Math]::Min($width, [int](($pct / 100) * $width)))
     $unfilledChars = $width - $filledChars
     
@@ -52,15 +39,15 @@ function Render-PipelineBar([int]$currentStage, [int]$totalStages, [string]$stat
 
     Write-Host "  +--------------------------------------------------------------------+" -ForegroundColor DarkGray
     Write-Host "  | " -NoNewline -ForegroundColor DarkGray
-    Write-Host "مسار التثبيت: [" -NoNewline -ForegroundColor Cyan
+    Write-Host "Installation Track: [" -NoNewline -ForegroundColor Cyan
     Write-Host "$barFilled" -NoNewline -ForegroundColor Green
     Write-Host "$barUnfilled" -NoNewline -ForegroundColor DarkGray
     Write-Host "] " -NoNewline -ForegroundColor Cyan
     Write-Host ("{0,3}%" -f $pct) -NoNewline -ForegroundColor White
-    Write-Host ("  الوقت: {0,7}" -f $timeStr) -NoNewline -ForegroundColor DarkYellow
+    Write-Host ("  Time: {0,7}" -f $timeStr) -NoNewline -ForegroundColor DarkYellow
     Write-Host " |" -ForegroundColor DarkGray
     Write-Host "  | " -NoNewline -ForegroundColor DarkGray
-    Write-Host ("المرحلة [{0}/{1}]: {2,-46}" -f $currentStage, $totalStages, $statusText) -NoNewline -ForegroundColor White
+    Write-Host ("Stage [{0}/{1}]: {2,-49}" -f $currentStage, $totalStages, $statusText) -NoNewline -ForegroundColor White
     Write-Host " |" -ForegroundColor DarkGray
     Write-Host "  +--------------------------------------------------------------------+" -ForegroundColor DarkGray
     Write-Host ""
@@ -72,9 +59,9 @@ function Log-Step([int]$stage, [int]$total, [string]$title, [string]$detail, [in
     Start-Sleep -Milliseconds 150
 }
 
-# 1. Environment & Node.js Verification
+# 1. Environment and Node.js Verification
 $t1 = [System.Diagnostics.Stopwatch]::StartNew()
-Log-Step 1 5 "التحقق من البيئة والمتطلبات البرمجية" "فحص محرك تشغيل Node.js..." 15
+Log-Step 1 5 "Environment and Runtime Verification" "Checking Node.js engine and execution prerequisites..." 15
 
 $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
 
@@ -90,7 +77,7 @@ if (-not $nodeCmd) {
 }
 
 if (-not $nodeCmd) {
-    Write-Host "  [!] لم يتم العثور على Node.js. جاري تثبيته تلقائياً عبر winget..." -ForegroundColor Yellow
+    Write-Host "  [!] Node.js not detected in PATH. Auto-installing via winget..." -ForegroundColor Yellow
     $wingetCmd = Get-Command winget -ErrorAction SilentlyContinue
     if ($wingetCmd) {
         try {
@@ -103,19 +90,19 @@ if (-not $nodeCmd) {
 
 if (-not $nodeCmd) {
     Write-Host ""
-    Write-Host "  [X] خطأ: Node.js مطلوب لتشغيل محرك الخدمة." -ForegroundColor Red
-    Write-Host "  يرجى تنزيله من https://nodejs.org ثم إعادة التشغيل." -ForegroundColor Yellow
+    Write-Host "  [X] Error: Node.js runtime is required to run background engine." -ForegroundColor Red
+    Write-Host "  Please download and install it from https://nodejs.org" -ForegroundColor Yellow
     Write-Host ""
     pause
     exit 1
 }
 $nodeVer = node -v
-Write-Host "  [+] تم تأكيد Node.js: $nodeVer" -ForegroundColor Green
+Write-Host "  [+] Node.js confirmed: $nodeVer" -ForegroundColor Green
 $Script:StageTimers["Stage1"] = $t1.ElapsedMilliseconds
 
 # 2. Directory Structure Preparation
 $t2 = [System.Diagnostics.Stopwatch]::StartNew()
-Log-Step 2 5 "تجهيز مسارات النظام وبنية المجلدات" "إعداد مجلدات AppData وقواعد الذكاء الاصطناعي..." 35
+Log-Step 2 5 "System Paths and Directory Structure" "Creating AppData directories and AI instruction roots..." 35
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $appDataDir = [System.Environment]::GetFolderPath("ApplicationData")
@@ -126,12 +113,12 @@ $geminiRulesDir = Join-Path $geminiConfigDir "rules"
 
 New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
 New-Item -ItemType Directory -Path $geminiRulesDir -Force | Out-Null
-Write-Host "  [+] الدليل المستهدف جاهز: $targetDir" -ForegroundColor Green
+Write-Host "  [+] Target workspace ready: $targetDir" -ForegroundColor Green
 $Script:StageTimers["Stage2"] = $t2.ElapsedMilliseconds
 
 # 3. Deploy Engine Core Files
 $t3 = [System.Diagnostics.Stopwatch]::StartNew()
-Log-Step 3 5 "نشر حزمة المحرك والملفات المصدرية" "نسخ نصوص الحقن البرمجي وخادم المراقبة..." 60
+Log-Step 3 5 "Engine Package and Source Deployment" "Deploying RTL inject scripts, CDP watcher and AI rules..." 60
 
 $baseUrl = "https://raw.githubusercontent.com/Khfaji/antigravity-arabic-suite/main"
 
@@ -154,12 +141,12 @@ Fetch-Or-Copy "rules\AGENTS.md" (Join-Path $geminiRulesDir "AGENTS.md")
 Fetch-Or-Copy "rules\GEMINI.md" (Join-Path $geminiConfigDir "GEMINI.md")
 Fetch-Or-Copy "version.json" (Join-Path $targetDir "version.json")
 
-Write-Host "  [+] تم نشر كافة حزم المحرك وقواعد الذكاء الاصطناعي بنجاح" -ForegroundColor Green
+Write-Host "  [+] Engine modules and AI rules successfully published" -ForegroundColor Green
 $Script:StageTimers["Stage3"] = $t3.ElapsedMilliseconds
 
-# 4. Auto-Start & Launcher Registration
+# 4. Auto-Start and Launcher Registration
 $t4 = [System.Diagnostics.Stopwatch]::StartNew()
-Log-Step 4 5 "تثبيت الإقلاع التلقائي واقتران الاختصارات" "تسجيل الخدمة في بدء تشغيل Windows واختصارات النظام..." 80
+Log-Step 4 5 "System Autostart and Shortcut Binding" "Registering Windows startup entry and pairing dual shortcuts..." 80
 
 $vbsPath = Join-Path $targetDir "start_hidden.vbs"
 $launcherVbs = Join-Path $targetDir "antigravity_launcher.vbs"
@@ -237,12 +224,12 @@ if ($ideCmd) {
     } catch {}
 }
 
-Write-Host "  [+] تم تسجيل الإقلاع واقتران الاختصارات المزدوجة بنجاح" -ForegroundColor Green
+Write-Host "  [+] Startup registry and paired dual-shortcuts configured" -ForegroundColor Green
 $Script:StageTimers["Stage4"] = $t4.ElapsedMilliseconds
 
-# 5. Live Service Activation & Injection
+# 5. Live Service Activation and Injection
 $t5 = [System.Diagnostics.Stopwatch]::StartNew()
-Log-Step 5 5 "تفعيل الخدمة والحقن الفوري المباشر" "إعادة تشغيل محرك الخدمة وحقن الـ RTL بالنافذة النشطة..." 100
+Log-Step 5 5 "Service Activation and Live Injection" "Restarting watcher daemon and injecting RTL into active window..." 100
 
 # Stop any running service.js instance cleanly
 Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue |
@@ -262,42 +249,41 @@ if (Test-Path $serviceScript) {
     } catch {}
 }
 
-Write-Host "  [+] تم إطلاق خادم المراقبة والحقن الفوري بنجاح" -ForegroundColor Green
+Write-Host "  [+] Watcher daemon active and live injection executed" -ForegroundColor Green
 $Script:StageTimers["Stage5"] = $t5.ElapsedMilliseconds
 
 # Final Completion Summary
 $totalTime = $Script:Stopwatch.ElapsedMilliseconds
-$tTotalStr = if ($totalTime -ge 1000) { "{0:N2} ثانية" -f ($totalTime / 1000) } else { "$totalTime ميلي ثانية" }
+$tTotalStr = if ($totalTime -ge 1000) { "{0:N2} seconds" -f ($totalTime / 1000) } else { "$totalTime ms" }
 
 Write-Host ""
 Write-Host "==========================================================================" -ForegroundColor Green
-Write-Host "               تم اكتمال تثبيت حزمة Antigravity بنجاح تام!                " -ForegroundColor White
+Write-Host "            Antigravity Arabic Suite Installed Successfully!              " -ForegroundColor White
 Write-Host "==========================================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "  تفاصيل أداء مراحل التثبيت:" -ForegroundColor Cyan
-Write-Host ("  [1] فحص البيئة والمتطلبات   : {0,6} ms  | مكتمل بنجاح" -f $Script:StageTimers["Stage1"]) -ForegroundColor Gray
-Write-Host ("  [2] بنية المسارات والمجلدات : {0,6} ms  | مكتمل بنجاح" -f $Script:StageTimers["Stage2"]) -ForegroundColor Gray
-Write-Host ("  [3] نشر ملفات وقواعد الحزمة : {0,6} ms  | مكتمل بنجاح" -f $Script:StageTimers["Stage3"]) -ForegroundColor Gray
-Write-Host ("  [4] الإقلاع واقتران النظام  : {0,6} ms  | مكتمل بنجاح" -f $Script:StageTimers["Stage4"]) -ForegroundColor Gray
-Write-Host ("  [5] تفعيل الخدمة والحقن الحي: {0,6} ms  | مكتمل بنجاح" -f $Script:StageTimers["Stage5"]) -ForegroundColor Gray
+Write-Host "  Stage Performance Breakdown:" -ForegroundColor Cyan
+Write-Host ("  [1] Environment & Runtime  : {0,6} ms  | Completed" -f $Script:StageTimers["Stage1"]) -ForegroundColor Gray
+Write-Host ("  [2] System Directory Tree  : {0,6} ms  | Completed" -f $Script:StageTimers["Stage2"]) -ForegroundColor Gray
+Write-Host ("  [3] Core Modules & Rules   : {0,6} ms  | Completed" -f $Script:StageTimers["Stage3"]) -ForegroundColor Gray
+Write-Host ("  [4] Startup & Pairing      : {0,6} ms  | Completed" -f $Script:StageTimers["Stage4"]) -ForegroundColor Gray
+Write-Host ("  [5] Live Daemon & Injection: {0,6} ms  | Completed" -f $Script:StageTimers["Stage5"]) -ForegroundColor Gray
 Write-Host "  ------------------------------------------------------------------" -ForegroundColor DarkGray
-Write-Host ("  إجمالي وقت العملية         : {0}" -f $tTotalStr) -ForegroundColor Yellow
+Write-Host ("  Total Execution Duration   : {0}" -f $tTotalStr) -ForegroundColor Yellow
 Write-Host ""
-Write-Host "  المميزات الفعالة الآن:" -ForegroundColor Cyan
-Write-Host "  * واجهة تدعم RTL بالكامل مع خط IBM Plex Sans Arabic فائق النقاء" -ForegroundColor White
-Write-Host "  * عدادات الاستهلاك مدمجة (يومي / أسبوعي / شهري) بنسب دقيقة" -ForegroundColor White
-Write-Host "  * لوحة معلومات الحزمة مع مسار التحديثات وزر إلغاء التثبيت المباشر" -ForegroundColor White
-Write-Host "  * مراقبة تلقائية وحقن فوري مستمر في الخلفية دون أي جهد" -ForegroundColor White
+Write-Host "  Active Features Inside Antigravity App:" -ForegroundColor Cyan
+Write-Host "  * Full RTL support with ultra-clean IBM Plex Sans Arabic font" -ForegroundColor White
+Write-Host "  * Precise twin circular quota meters (Hourly / Weekly quotas)" -ForegroundColor White
+Write-Host "  * Project status capsule with release track and direct uninstall button" -ForegroundColor White
+Write-Host "  * Continuous background watcher and instant injection without reloads" -ForegroundColor White
 Write-Host ""
 Write-Host "==========================================================================" -ForegroundColor DarkGray
-Write-Host "  اكتمل التثبيت بنجاح. النافذة ستبقى مفتوحة لمراجعة التفاصيل." -ForegroundColor Green
-Write-Host "  اضغط على أي مفتاح للإغلاق عند الانتهاء..." -ForegroundColor Gray
+Write-Host "  Installation complete. The window stays open for review." -ForegroundColor Green
+Write-Host "  Press any key to close..." -ForegroundColor Gray
 Write-Host "==========================================================================" -ForegroundColor DarkGray
 Write-Host ""
 
-# Keep window open whether executed directly or via shortcut/cmd
 try {
     [Console]::ReadKey($true) | Out-Null
 } catch {
-    Read-Host "اضغط Enter للإغلاق..."
-}
+    Read-Host "Press Enter to exit..."
+}
