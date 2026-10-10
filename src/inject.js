@@ -736,11 +736,11 @@ const INJECT_CODE = `
       <!-- Active Model Card -->
       <div style="background:var(--secondary, rgba(255,255,255,0.08));border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.1);">
         <div style="font-size:12px;opacity:0.75;margin-bottom:4px;font-weight:500;">النموذج المحدد حالياً:</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <span style="font-weight:700;font-size:14px;color:var(--foreground, currentColor);">\${activeLabelClean}</span>
-          <span style="font-weight:800;font-size:14px;color:\${activeColor};">\${activePct}%</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;direction:ltr;">
+          <span style="font-weight:700;font-size:14px;color:var(--foreground, currentColor);text-align:left;">\${activeLabelClean}</span>
+          <span style="font-weight:800;font-size:14px;color:\${activeColor};text-align:right;">\${activePct}%</span>
         </div>
-        <div style="width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;margin-bottom:8px;">
+        <div style="width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;margin-bottom:8px;direction:ltr;">
           <div style="width:\${activePct}%;height:100%;background:\${activeColor};border-radius:4px;transition:width 0.3s ease;"></div>
         </div>
 
@@ -806,11 +806,11 @@ const INJECT_CODE = `
 
       html += \`
         <div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:13px;font-weight:600;">\${item.baseLabel}</span>
-            <span style="font-weight:800;font-size:12.5px;color:\${col};">\${p}%</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;direction:ltr;">
+            <span style="font-size:13px;font-weight:600;text-align:left;">\${item.baseLabel}</span>
+            <span style="font-weight:800;font-size:12.5px;color:\${col};text-align:right;">\${p}%</span>
           </div>
-          <div style="width:100%;height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
+          <div style="width:100%;height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;direction:ltr;">
             <div style="width:\${p}%;height:100%;background:\${col};border-radius:3px;"></div>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:0.75;margin-top:2px;">
