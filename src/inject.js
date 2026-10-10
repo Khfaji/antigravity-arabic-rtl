@@ -537,6 +537,67 @@ const INJECT_CODE = `
     }
   }
 
+  function computeEffectiveQuota(modelConfig, quotaSummary) {
+    if (!modelConfig) return { fraction: 1, pct: 100, resetTime: '' };
+
+    const label = (modelConfig.label || '').toLowerCase();
+    const isGemini = /gemini|flash|pro|exp/i.test(label);
+    const groups = quotaSummary?.response?.groups || [];
+
+    let matchingGroup = null;
+    for (const g of groups) {
+      const gName = (g.displayName || '').toLowerCase();
+      if (isGemini && gName.includes('gemini')) {
+        matchingGroup = g;
+        break;
+      } else if (!isGemini && (gName.includes('claude') || gName.includes('gpt') || gName.includes('3p'))) {
+        matchingGroup = g;
+        break;
+      }
+    }
+
+    const buckets = matchingGroup?.buckets || [];
+    const b5h = buckets.find(b => b.window === '5h' || (b.bucketId && b.bucketId.includes('5h')));
+    const bWeekly = buckets.find(b => b.window === 'weekly' || (b.bucketId && b.bucketId.includes('weekly')));
+
+    const candidates = [];
+    let bestResetTime = modelConfig.quotaInfo?.resetTime || '';
+
+    // 1. Direct model quota if present
+    if (typeof modelConfig.quotaInfo?.remainingFraction === 'number') {
+      candidates.push(modelConfig.quotaInfo.remainingFraction);
+    }
+
+    // 2. 5h bucket limit (takes priority on immediate depletion)
+    if (b5h && typeof b5h.remainingFraction === 'number') {
+      candidates.push(b5h.remainingFraction);
+      if (!bestResetTime || (b5h.remainingFraction <= 0.05 && b5h.resetTime)) {
+        bestResetTime = b5h.resetTime;
+      }
+    }
+
+    // 3. Weekly bucket limit
+    if (bWeekly && typeof bWeekly.remainingFraction === 'number') {
+      candidates.push(bWeekly.remainingFraction);
+      if (bWeekly.remainingFraction <= 0.05 && bWeekly.resetTime) {
+        bestResetTime = bWeekly.resetTime;
+      }
+    }
+
+    if (candidates.length > 0) {
+      // The true usable capacity is bounded by the strictest limit
+      const minFraction = Math.min(...candidates);
+      const safeFraction = Math.max(0, Math.min(1, minFraction));
+      return {
+        fraction: safeFraction,
+        pct: Math.round(safeFraction * 100),
+        resetTime: bestResetTime
+      };
+    }
+
+    return { fraction: 1, pct: 100, resetTime: bestResetTime };
+  }
+
   function renderModelQuotaWidget() {
     try {
       const micBtn = document.querySelector('button[aria-label="Record voice memo"]');
@@ -573,45 +634,50 @@ const INJECT_CODE = `
         micBtn.parentElement.insertBefore(widget, micBtn);
       }
 
-      // Calculate percentage and color
-      let pct = 100;
+      // Calculate percentage and color using strict minimum effective quota
+      let pct = -1;
       let strokeColor = '#10b981'; // green
       let displayLabel = 'المودل';
 
       if (info && info.activeModel) {
         displayLabel = info.activeModel.label;
-        const fraction = info.activeModel.quotaInfo?.remainingFraction;
-        if (typeof fraction === 'number') {
-          pct = Math.round(fraction * 100);
-        }
+        const effective = computeEffectiveQuota(info.activeModel, cachedQuotaSummary);
+        pct = effective.pct;
       }
+
+
 
       if (pct > 60) {
         strokeColor = '#10b981'; // Green
       } else if (pct > 25) {
         strokeColor = '#f59e0b'; // Amber / Orange
+      } else if (pct >= 0) {
+        strokeColor = '#ef4444'; // Red (includes pct=0)
       } else {
-        strokeColor = '#ef4444'; // Red
+        strokeColor = 'currentColor'; // loading state
       }
 
       const circumference = 69.1; // 2 * PI * 11
-      const strokeDash = (circumference * (pct / 100)).toFixed(1);
+      const safePct = pct < 0 ? 0 : pct;
+      const strokeDash = (circumference * (safePct / 100)).toFixed(1);
+      const displayPct = pct < 0 ? '…' : String(pct);
 
       const stateKey = displayLabel + '_' + pct;
       if (widget.getAttribute('data-state-key') !== stateKey) {
         widget.setAttribute('data-state-key', stateKey);
         widget.innerHTML = \`
-          <div style="position:relative;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background-color 0.15s ease;" class="hover:bg-secondary" title="\${displayLabel} (\${pct}% متبقي) - انقر للتحديث">
+          <div style="position:relative;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background-color 0.15s ease;" class="hover:bg-secondary" title="\${displayLabel} (\${pct < 0 ? 'جاري التحميل' : pct + '% متبقي'}) - انقر للتحديث">
             <svg width="28" height="28" viewBox="0 0 28 28" style="transform:rotate(-90deg);">
               <circle cx="14" cy="14" r="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.5 2.5" opacity="0.25"/>
               <circle cx="14" cy="14" r="11" fill="none" stroke="\${strokeColor}" stroke-width="1.8"
-                      stroke-dasharray="\${strokeDash} \${circumference}" style="stroke-dasharray: 2.5 2; transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;" stroke-linecap="round"/>
+                      stroke-dasharray="\${strokeDash} \${circumference}" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;" stroke-linecap="round"/>
               <circle cx="14" cy="14" r="11" fill="none" stroke="\${strokeColor}" stroke-width="1.8" stroke-dasharray="\${strokeDash} \${circumference}" opacity="0.4" style="transition:stroke-dasharray 0.4s ease, stroke 0.4s ease;"/>
             </svg>
-            <span style="position:absolute;font-size:11px;font-weight:500;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:0;">\${pct}</span>
+            <span style="position:absolute;font-size:11px;font-weight:500;font-family:system-ui,-apple-system,sans-serif;color:currentColor;letter-spacing:0;">\${displayPct}</span>
           </div>
         \`;
       }
+
 
       // Check and render update capsule next to widget if an update is available
       renderUpdateCapsule(widget);
@@ -1201,12 +1267,12 @@ const INJECT_CODE = `
 
     const { activeModel, allConfigs, officialSortLabels, geminiWeeklyBucket, thirdPartyWeeklyBucket } = info;
     const activeLabelClean = cleanModelLabel(activeModel ? activeModel.label : info.triggerLabel);
-    const activeFraction = activeModel?.quotaInfo?.remainingFraction ?? 1;
-    const activePct = Math.round(activeFraction * 100);
-    const activeReset = formatTimeRemaining(activeModel?.quotaInfo?.resetTime);
+    const activeEffective = computeEffectiveQuota(activeModel, cachedQuotaSummary);
+    const activePct = activeEffective.pct;
+    const activeReset = formatTimeRemaining(activeEffective.resetTime || activeModel?.quotaInfo?.resetTime);
 
     // Identify if active model belongs to Gemini or 3P
-    const isGemini = /gemini/i.test(activeLabelClean);
+    const isGemini = /gemini|flash|pro|exp/i.test(activeLabelClean);
     const activeWeekly = isGemini ? geminiWeeklyBucket : thirdPartyWeeklyBucket;
     const activeWeeklyPct = activeWeekly ? Math.round((activeWeekly.remainingFraction ?? 1) * 100) : null;
     const activeWeeklyReset = activeWeekly ? formatTimeRemaining(activeWeekly.resetTime) : null;
@@ -1289,10 +1355,10 @@ const INJECT_CODE = `
 
     groupedConfigs.forEach(item => {
       const m = item.rawConfig;
-      const f = m.quotaInfo?.remainingFraction ?? 1;
-      const p = Math.round(f * 100);
+      const effectiveM = computeEffectiveQuota(m, cachedQuotaSummary);
+      const p = effectiveM.pct;
       const col = p > 60 ? '#10b981' : (p > 25 ? '#f59e0b' : '#ef4444');
-      const reset = formatTimeRemaining(m.quotaInfo?.resetTime);
+      const reset = formatTimeRemaining(effectiveM.resetTime || m.quotaInfo?.resetTime);
 
       const mIsGemini = /gemini/i.test(item.baseLabel);
       const mWeekly = mIsGemini ? geminiWeeklyBucket : thirdPartyWeeklyBucket;
