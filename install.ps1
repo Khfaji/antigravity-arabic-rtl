@@ -7,7 +7,14 @@
     and immediately injects live into running Antigravity instances with interactive progress stages.
 #>
 
-$ErrorActionPreference = "Stop"
+# Force Windows Terminal relaunch if running in legacy conhost
+if (-not $env:WT_SESSION) {
+    $wtCmd = Get-Command wt.exe -ErrorAction SilentlyContinue
+    if ($wtCmd) {
+        Start-Process "wt.exe" -ArgumentList "powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File `"$PSCommandPath`""
+        exit 0
+    }
+}
 
 # Force standard UTF-8 for Output and Input streams
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
